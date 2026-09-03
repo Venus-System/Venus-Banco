@@ -1,0 +1,34 @@
+{
+  "generated_at": "20260813T160507Z",
+  "ingredients_total": 26045,
+  "common_name": {
+    "espacamento_corrompido (prova: despace == inci)": 10334,
+    "traducao_pt_a_restaurar (sobrescrita pelo INCI ou divergente)": 6590,
+    "ja_correto": 9120,
+    "sem_fonte_confiavel": 1
+  },
+  "evidencia_de_uso_cosmetico": {
+    "categorized": 5933,
+    "historical_function": 7396,
+    "has_effects": 4401,
+    "has_regulations": 0
+  },
+  "politicas": {
+    "standard": {
+      "manter": 7923,
+      "remover": 18122
+    },
+    "strict": {
+      "manter": 7400,
+      "remover": 18645
+    }
+  },
+  "dependentes_fk_descobertos": [
+    "venus.ingredient_aliases.fk_ingredient_id",
+    "venus.ingredient_properties.fk_ingredient_id",
+    "venus.ingredient_effects.fk_ingredient_id",
+    "venus.ingredient_regulations.fk_ingredient_id",
+    "venus.product_ingredients.fk_ingredient_id",
+    "venus.rule_evaluations.fk_ingredient_id"
+  ]
+}

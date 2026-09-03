@@ -1,0 +1,30 @@
+{
+  "stage": "repair-names",
+  "status": "applied",
+  "generated_at": "20260813T160535Z",
+  "totals": {
+    "scanned": 26045,
+    "unchanged": 9120,
+    "anvisa_translation": 16879,
+    "inci_reconstructed": 45,
+    "unresolved": 1,
+    "flagged_for_review": 0
+  },
+  "pending_updates": 16924,
+  "tables_modified": [
+    "venus.ingredients"
+  ],
+  "columns_modified": [
+    "common_name",
+    "updated_at"
+  ],
+  "protected_tables": {
+    "profile_tags": 105,
+    "score_categories": 32,
+    "scoring_models": 31,
+    "ingredient_categories": 85,
+    "regulations": 3
+  },
+  "report": "C:\\Users\\matheusorestes-IEG\\Downloads\\venus_load_repair_v12 (1)\\venus_load_repair_v12\\output\\repair_names_20260813T160535Z.csv",
+  "fonte_de_verdade": "venus.ingredient_properties.property_name='anvisa_translation'"
+}

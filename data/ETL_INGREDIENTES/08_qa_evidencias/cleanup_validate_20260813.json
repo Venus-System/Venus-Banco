@@ -1,0 +1,50 @@
+{
+  "stage": "validate",
+  "generated_at": "20260813T161247Z",
+  "ingredientes_total": 7923,
+  "protected_tables": {
+    "profile_tags": 105,
+    "score_categories": 32,
+    "scoring_models": 31,
+    "ingredient_categories": 85,
+    "regulations": 3
+  },
+  "checks": [
+    {
+      "check": "orfaos_em_ingredient_properties",
+      "value": 0,
+      "ok": true
+    },
+    {
+      "check": "orfaos_em_ingredient_aliases",
+      "value": 0,
+      "ok": true
+    },
+    {
+      "check": "orfaos_em_ingredient_effects",
+      "value": 0,
+      "ok": true
+    },
+    {
+      "check": "orfaos_em_ingredient_regulations",
+      "value": 0,
+      "ok": true
+    },
+    {
+      "check": "common_name_vazio",
+      "value": 0,
+      "ok": true
+    },
+    {
+      "check": "common_name_com_espacamento_quebrado",
+      "value": 0,
+      "ok": true
+    },
+    {
+      "check": "common_name_em_ingles_com_traducao_pt_disponivel",
+      "value": 0,
+      "ok": true
+    }
+  ],
+  "resultado": "OK"
+}

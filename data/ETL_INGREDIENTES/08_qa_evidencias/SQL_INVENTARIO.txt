@@ -1,0 +1,15 @@
+Inventário do artefato data/venus_v12_load.sql
+
+Linhas totais: 246980
+INSERTs totais: 246978
+INSERTs ingredients: 26045
+INSERTs ingredient_properties: 139402
+INSERTs ingredient_aliases: 75230
+INSERTs ingredient_effects: 5842
+INSERTs ingredient_regulations: 458
+INSERTs ingredient_categories: 1
+Tamanho: 174548785 bytes (aprox. 166.5 MiB)
+
+A soma das famílias listadas acima é 246978, exatamente o total de INSERTs do arquivo.
+As 246978 linhas INSERT cobrem a carga bruta; as duas linhas restantes do arquivo são
+statements/linhas auxiliares que não começam por INSERT INTO.

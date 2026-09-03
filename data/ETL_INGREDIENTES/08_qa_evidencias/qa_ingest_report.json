@@ -1,0 +1,43 @@
+{
+  "load": "load\\venus_v12_load.sql",
+  "statements": 246980,
+  "insert_counts": {
+    "ingredient_categories": 1,
+    "ingredients": 26045,
+    "ingredient_properties": 139402,
+    "ingredient_aliases": 75230,
+    "ingredient_effects": 5842,
+    "ingredient_regulations": 458
+  },
+  "mode": "commit",
+  "execution_engine": "psycopg_single_multistatement",
+  "preflight": {
+    "ingredient_categories": 84,
+    "profile_tags": 105,
+    "score_categories": 32,
+    "scoring_models": 31,
+    "regulations": 3
+  },
+  "after": {
+    "ingredients": 26045,
+    "ingredient_aliases": 75230,
+    "ingredient_properties": 139402,
+    "ingredient_effects": 5842,
+    "ingredient_regulations": 0,
+    "regulations": 3,
+    "orphan_effects": 0,
+    "orphan_regulations": 0,
+    "orphan_categories": 0,
+    "score_categories_after": 32,
+    "scoring_models_after": 31,
+    "profile_tags_after": 105,
+    "baseline_protected": {
+      "ingredient_categories": 84,
+      "profile_tags": 105,
+      "score_categories": 32,
+      "scoring_models": 31,
+      "regulations": 3
+    }
+  },
+  "status": "committed"
+}
