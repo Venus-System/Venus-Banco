@@ -1,0 +1,49 @@
+{
+  "etl_name": "Venus ingredient ETL",
+  "historical_run": "2026-08-13",
+  "source_workbook_rows": 30166,
+  "candidate_ingredients": 26045,
+  "raw_sql_lines": 246980,
+  "raw_sql_inserts": 246978,
+  "raw_counts": {
+    "ingredients": 26045,
+    "ingredient_properties": 139402,
+    "ingredient_aliases": 75230,
+    "ingredient_effects": 5842,
+    "ingredient_regulations": 458
+  },
+  "standard_keep": 7923,
+  "standard_remove": 18122,
+  "sources": [
+    "ANVISA",
+    "European Union / EUR-Lex / CosIng",
+    "PubChem PUG REST"
+  ],
+  "files": [
+    {
+      "path": "data/venus_v12_load.sql",
+      "bytes": 174548785,
+      "sha256": "c7900d6a6213f7a54d37482952057c693b98e5e4ffbfc429de198720fb8240b2"
+    },
+    {
+      "path": "data/ETL_INGREDIENTES/01_fontes/ANVISA_Base_de_Traducao_2025-03-06.xlsx",
+      "bytes": 1646716,
+      "sha256": "ab4aa7d13173fb5d443d3f0273257721b83692754ef71e1fba14c57d5f60be24"
+    },
+    {
+      "path": "data/ETL_INGREDIENTES/08_qa_evidencias/cleanup_analyze_20260813.json",
+      "bytes": 961,
+      "sha256": "62f8a91a9de9dabcfae38537d456149f766387d54409aea7cacf587064fad662"
+    },
+    {
+      "path": "data/ETL_INGREDIENTES/08_qa_evidencias/cleanup_validate_20260813.json",
+      "bytes": 1032,
+      "sha256": "f8e92a29282bc56bfd1f4c98c94ec3b71e9a45604d607da6b3755506c5980d96"
+    },
+    {
+      "path": "data/ETL_INGREDIENTES/08_qa_evidencias/repair_names_summary_20260813.json",
+      "bytes": 839,
+      "sha256": "40fca89f1c17a9b3706b79c1ff59d38bee660f19aee6b1f87f326666809672ca"
+    }
+  ]
+}
