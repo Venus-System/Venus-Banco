@@ -1104,3 +1104,14 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_changed_by ON venus_audit.audit_logs(changed_by, changed_at);
 
+BEGIN;
+
+ALTER TABLE venus.users
+    ADD COLUMN IF NOT EXISTS email TEXT,
+    ADD COLUMN IF NOT EXISTS password_hash TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_users_email
+    ON venus.users (LOWER(email))
+    WHERE email IS NOT NULL;
+
+COMMIT;
