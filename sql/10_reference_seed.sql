@@ -229,7 +229,6 @@ INSERT INTO profile_tags (name, description, slug, category) VALUES
     ('Muito Seca', 'Pele extremamente seca, com necessidade intensa de hidratação', 'muito-seca', 'skin'),
     ('Reativa', 'Pele que reage facilmente a novos produtos ou ingredientes', 'reativa', 'skin'),
     ('Pele Madura', 'Pele madura com foco em firmeza e elasticidade', 'pele-madura', 'skin'),
-    ('Pele Adolescente', 'Pele adolescente com necessidades específicas', 'pele-adolescente', 'skin'),
     ('Olhos Sensíveis', 'Usuário com sensibilidade na região dos olhos', 'olhos-sensiveis', 'health'),
     ('Usuário de Lentes de Contato', 'Usuário que usa lentes de contato', 'usuario-de-lentes-de-contato', 'health'),
     ('Amamentação', 'Usuário em fase de amamentação', 'amamentacao', 'health'),
@@ -506,6 +505,5 @@ INSERT INTO scoring_models (name, version, description, is_active) VALUES
     ('Hiperpigmentação', '1.0.0', 'Modelo ajustado para hiperpigmentação', FALSE),
     ('Melasma', '1.0.0', 'Modelo ajustado para melasma', FALSE),
     ('Psoríase', '1.0.0', 'Modelo ajustado para psoríase', FALSE),
-    ('Pele Adolescente', '1.0.0', 'Modelo ajustado para pele adolescente', FALSE),
     ('Cosméticos Premium', '1.0.0', 'Modelo ajustado para posicionamento premium', FALSE)
 ON CONFLICT (name, version) DO NOTHING;

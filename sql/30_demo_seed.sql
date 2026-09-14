@@ -128,6 +128,23 @@ VALUES
 ON p.firebase_uid=u.firebase_uid
 ON CONFLICT (fk_user_id) DO NOTHING;
 
+/* Padrões capilares sintéticos de demonstração, coerentes com hair_type. */
+UPDATE user_profiles up
+SET hair_pattern = v.hair_pattern::venus.hair_pattern_enum
+FROM (VALUES
+    ('venus-seed-user-001','1A'),('venus-seed-user-002','2A'),('venus-seed-user-003','3A'),('venus-seed-user-004','1B'),
+    ('venus-seed-user-005','2B'),('venus-seed-user-006','1C'),('venus-seed-user-007','3B'),('venus-seed-user-008','4A'),
+    ('venus-seed-user-009','1A'),('venus-seed-user-010','2C'),('venus-seed-user-011','1B'),('venus-seed-user-012','3C'),
+    ('venus-seed-user-013','2A'),('venus-seed-user-014','4B'),('venus-seed-user-015','1C'),('venus-seed-user-016','3A'),
+    ('venus-seed-user-017','1A'),('venus-seed-user-018','4C'),('venus-seed-user-019','2B'),('venus-seed-user-020','1B'),
+    ('venus-seed-user-021','3B'),('venus-seed-user-022','1C'),('venus-seed-user-023','2C'),('venus-seed-user-024','3C'),
+    ('venus-seed-user-025','1A'),('venus-seed-user-026','4A'),('venus-seed-user-027','2A'),('venus-seed-user-028','3A'),
+    ('venus-seed-user-029','1B'),('venus-seed-user-030','2B'),('venus-seed-user-031','1C'),('venus-seed-user-032','4B'),
+    ('venus-seed-user-033','3B'),('venus-seed-user-034','1A'),('venus-seed-user-035','2C'),('venus-seed-user-036','3C'),
+    ('venus-seed-user-037','1B'),('venus-seed-user-038','4C'),('venus-seed-user-039','2A'),('venus-seed-user-040','1C')
+) AS v(firebase_uid,hair_pattern)
+JOIN users u ON u.firebase_uid=v.firebase_uid
+WHERE up.fk_user_id=u.user_id;
 
 INSERT INTO user_preferences
 (fk_user_id, prefer_cruelty_free, prefer_vegan, prefer_sustainable,
@@ -208,6 +225,14 @@ JOIN users u ON u.firebase_uid=v.firebase_uid
 JOIN allergies a ON a.allergy_name=v.allergy_name
 ON CONFLICT (fk_user_id,fk_allergy_id) DO NOTHING;
 
+/* Correspondências INCI exatas para as alergias de ingrediente. */
+INSERT INTO allergy_ingredients (fk_allergy_id, fk_ingredient_id, source_type, source_reference)
+SELECT a.allergy_id, i.ingredient_id, 'system', '30_demo_seed.sql: exact allergy_name = ingredients.inci_name'
+FROM allergies a
+JOIN ingredients i ON UPPER(BTRIM(a.allergy_name)) = UPPER(BTRIM(i.inci_name))
+WHERE a.allergy_type='ingredient'
+ON CONFLICT (fk_allergy_id,fk_ingredient_id) DO NOTHING;
+
 INSERT INTO user_profile_tags (fk_user_id,fk_profile_tag_id)
 SELECT u.user_id,pt.profile_tag_id
 FROM users u
@@ -254,7 +279,6 @@ JOIN profile_tags pt ON
     OR (pt.slug='couro-cabeludo-oleoso' AND up.scalp_type='oily')
     OR (pt.slug='couro-cabeludo-seco' AND up.scalp_type='dry')
     OR (pt.slug='couro-cabeludo-sensivel' AND up.scalp_type='sensitive')
-    OR (pt.slug='pele-adolescente' AND up.age_range IN ('under_13','age_13_17'))
 ON CONFLICT (fk_user_id,fk_profile_tag_id) DO NOTHING;
 
 

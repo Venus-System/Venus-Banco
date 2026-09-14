@@ -20,7 +20,7 @@ END$$;
 
 DO $$
 BEGIN
-    CREATE TYPE age_range_enum AS ENUM ('under_13', 'age_13_17', 'age_18_24', 'age_25_34', 'age_35_44', 'age_45_54', 'age_55_plus');
+    CREATE TYPE age_range_enum AS ENUM ('age_18_24', 'age_25_34', 'age_35_44', 'age_45_54', 'age_55_plus');
 EXCEPTION
     WHEN duplicate_object THEN NULL;
 END$$;
@@ -42,6 +42,13 @@ END$$;
 DO $$
 BEGIN
     CREATE TYPE hair_type_enum AS ENUM ('straight', 'wavy', 'curly', 'coily', 'other');
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END$$;
+
+DO $$
+BEGIN
+    CREATE TYPE hair_pattern_enum AS ENUM ('1A','1B','1C','2A','2B','2C','3A','3B','3C','4A','4B','4C','other');
 EXCEPTION
     WHEN duplicate_object THEN NULL;
 END$$;
@@ -342,6 +349,7 @@ CREATE TABLE user_profiles (
     has_rosacea BOOLEAN NOT NULL DEFAULT FALSE,
     has_eczema BOOLEAN NOT NULL DEFAULT FALSE,
     hair_type hair_type_enum NOT NULL DEFAULT 'other',
+    hair_pattern hair_pattern_enum,
     scalp_type scalp_type_enum NOT NULL DEFAULT 'other',
     skin_sensitivity sensitivity_level_enum NOT NULL DEFAULT 'medium',
     acne_prone BOOLEAN NOT NULL DEFAULT FALSE,
@@ -350,7 +358,18 @@ CREATE TABLE user_profiles (
     is_pregnant BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    CONSTRAINT ck_user_profiles_hair_pattern_consistency CHECK (
+        hair_pattern IS NULL
+        OR hair_pattern = 'other'
+        OR (hair_pattern IN ('1A','1B','1C') AND hair_type = 'straight')
+        OR (hair_pattern IN ('2A','2B','2C') AND hair_type = 'wavy')
+        OR (hair_pattern IN ('3A','3B','3C') AND hair_type = 'curly')
+        OR (hair_pattern IN ('4A','4B','4C') AND hair_type = 'coily')
+    ),
+    CONSTRAINT ck_user_profiles_adult_age_range CHECK (
+        age_range IN ('age_18_24','age_25_34','age_35_44','age_45_54','age_55_plus')
+    )
 );
 
 CREATE TABLE user_preferences (
@@ -545,6 +564,17 @@ CREATE TABLE product_ingredients (
     UNIQUE (fk_product_version_id, position)
 );
 
+CREATE TABLE allergy_ingredients (
+    allergy_ingredient_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    fk_allergy_id BIGINT NOT NULL REFERENCES allergies(allergy_id) ON DELETE CASCADE,
+    fk_ingredient_id BIGINT NOT NULL REFERENCES ingredients(ingredient_id) ON DELETE CASCADE,
+    source_type source_type_enum NOT NULL DEFAULT 'admin',
+    source_reference TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (fk_allergy_id, fk_ingredient_id)
+);
+
 CREATE TABLE compatibility_rules (
     compatibility_rule_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     fk_ingredient_effect_id BIGINT NOT NULL REFERENCES ingredient_effects(ingredient_effect_id) ON DELETE CASCADE,
@@ -735,6 +765,9 @@ CREATE INDEX IF NOT EXISTS idx_regulations_country ON regulations (country);
 CREATE INDEX IF NOT EXISTS idx_user_allergies_allergy ON user_allergies (fk_allergy_id);
 
 CREATE INDEX IF NOT EXISTS idx_user_profile_tags_tag ON user_profile_tags (fk_profile_tag_id);
+CREATE INDEX IF NOT EXISTS idx_allergy_ingredients_allergy ON allergy_ingredients (fk_allergy_id);
+CREATE INDEX IF NOT EXISTS idx_allergy_ingredients_ingredient ON allergy_ingredients (fk_ingredient_id);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_hair_pattern ON user_profiles (hair_pattern);
 CREATE INDEX IF NOT EXISTS idx_user_profiles_skin_phototype ON user_profiles (skin_phototype);
 
 CREATE INDEX IF NOT EXISTS idx_products_brand ON products (fk_brand_id);
@@ -1104,14 +1137,3 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_changed_by ON venus_audit.audit_logs(changed_by, changed_at);
 
-BEGIN;
-
-ALTER TABLE venus.users
-    ADD COLUMN IF NOT EXISTS email TEXT,
-    ADD COLUMN IF NOT EXISTS password_hash TEXT;
-
-CREATE UNIQUE INDEX IF NOT EXISTS ux_users_email
-    ON venus.users (LOWER(email))
-    WHERE email IS NOT NULL;
-
-COMMIT;

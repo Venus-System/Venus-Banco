@@ -107,3 +107,41 @@ SELECT 'cloudinary_single_source_of_truth' AS check_name,
 SELECT 'cloudinary_media_required_metadata' AS check_name, COUNT(*) AS total_null_public_id
 FROM venus.media_assets
 WHERE public_id IS NULL OR BTRIM(public_id)='';
+
+SELECT 'adult_only_age_range' AS check_name,
+       COUNT(*) AS forbidden_minor_rows
+FROM venus.user_profiles
+WHERE age_range::text IN ('under_13','age_13_17');
+
+SELECT 'age_range_enum_values' AS check_name,
+       string_agg(e.enumlabel, ', ' ORDER BY e.enumsortorder) AS values
+FROM pg_enum e
+JOIN pg_type t ON t.oid = e.enumtypid
+JOIN pg_namespace n ON n.oid = t.typnamespace
+WHERE n.nspname='venus' AND t.typname='age_range_enum';
+
+SELECT 'allergy_ingredient_table' AS check_name,
+       CASE WHEN EXISTS (
+           SELECT 1 FROM information_schema.tables
+           WHERE table_schema='venus' AND table_name='allergy_ingredients'
+       ) THEN 1 ELSE 0 END AS exists_flag;
+
+SELECT 'unmapped_ingredient_allergies' AS check_name,
+       COUNT(*) AS total
+FROM venus.allergies a
+LEFT JOIN venus.allergy_ingredients ai
+  ON ai.fk_allergy_id=a.allergy_id
+WHERE a.allergy_type='ingredient'
+  AND ai.allergy_ingredient_id IS NULL;
+
+SELECT 'hair_pattern_inconsistent' AS check_name,
+       COUNT(*) AS total
+FROM venus.user_profiles
+WHERE hair_pattern IS NOT NULL
+  AND NOT (
+      hair_pattern='other'
+      OR (hair_pattern IN ('1A','1B','1C') AND hair_type='straight')
+      OR (hair_pattern IN ('2A','2B','2C') AND hair_type='wavy')
+      OR (hair_pattern IN ('3A','3B','3C') AND hair_type='curly')
+      OR (hair_pattern IN ('4A','4B','4C') AND hair_type='coily')
+  );
