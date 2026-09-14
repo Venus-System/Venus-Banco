@@ -307,6 +307,20 @@ VALUES
 
 (
     'TABLE',
+    'allergy_ingredients',
+    '',
+    'Relação entre alergias e ingredientes INCI.',
+    'Permite ao motor de compatibilidade identificar quais ingredientes acionam uma alergia declarada.',
+    'SYSTEM',
+    'Uso controlado pelo backend e motor de compatibilidade.',
+    'INTERNAL',
+    NULL,
+    NULL,
+    NULL
+),
+
+(
+    'TABLE',
     'user_profiles',
     '',
     'Perfil de características declaradas pelo usuário.',
@@ -811,6 +825,19 @@ INSERT INTO venus.data_catalog_rules
     notes
 )
 VALUES
+
+(
+    'COLUMN',
+    'user_profiles',
+    'hair_pattern',
+    'Classificação específica do padrão capilar (1A–4C).',
+    'Pode ser nulo em perfis legados; quando preenchido deve ser coerente com hair_type.',
+    'OWNER',
+    'Somente o próprio usuário.',
+    'CONFIDENTIAL',
+    'Característica pessoal declarada.',
+    NULL
+),
 
 (
     'COLUMN',

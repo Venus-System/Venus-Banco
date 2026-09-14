@@ -221,6 +221,7 @@ SELECT
     up.has_rosacea,
     up.has_eczema,
     up.hair_type::text AS hair_type,
+    up.hair_pattern::text AS hair_pattern,
     up.scalp_type::text AS scalp_type,
     up.skin_sensitivity::text AS skin_sensitivity,
     up.acne_prone,
