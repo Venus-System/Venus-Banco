@@ -365,6 +365,7 @@ CREATE TABLE user_profiles (
     age_range age_range_enum NOT NULL DEFAULT 'age_18_24',
     gender gender_enum NOT NULL DEFAULT 'prefer_not_say',
     is_pregnant BOOLEAN NOT NULL DEFAULT FALSE,
+    is_breastfeeding BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
