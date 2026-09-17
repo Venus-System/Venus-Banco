@@ -1,4 +1,3 @@
-
 CREATE SCHEMA IF NOT EXISTS venus;
 CREATE SCHEMA IF NOT EXISTS venus_audit;
 
@@ -325,6 +324,16 @@ CREATE TABLE score_categories (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE scoring_model_categories (
+    scoring_model_category_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    fk_scoring_model_id BIGINT NOT NULL REFERENCES scoring_models(scoring_model_id) ON DELETE CASCADE,
+    fk_score_category_id BIGINT NOT NULL REFERENCES score_categories(score_category_id) ON DELETE RESTRICT,
+    weight NUMERIC(6,2) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    UNIQUE (fk_scoring_model_id, fk_score_category_id)
+);
+
 CREATE TABLE regulations (
     regulation_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title TEXT NOT NULL,
@@ -356,6 +365,7 @@ CREATE TABLE user_profiles (
     age_range age_range_enum NOT NULL DEFAULT 'age_18_24',
     gender gender_enum NOT NULL DEFAULT 'prefer_not_say',
     is_pregnant BOOLEAN NOT NULL DEFAULT FALSE,
+    is_breastfeeding BOOLEAN NOT NULL DEFAULT FALSE,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -802,6 +812,8 @@ CREATE INDEX IF NOT EXISTS idx_compatibility_rules_enabled ON compatibility_rule
 
 CREATE INDEX IF NOT EXISTS idx_product_scores_model ON product_scores (fk_scoring_model_id);
 
+CREATE INDEX IF NOT EXISTS idx_scoring_model_categories_category ON scoring_model_categories (fk_score_category_id);
+
 
 
 
@@ -1136,4 +1148,3 @@ BEGIN
 END $$;
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_changed_by ON venus_audit.audit_logs(changed_by, changed_at);
-
