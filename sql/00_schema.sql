@@ -19,7 +19,7 @@ END$$;
 
 DO $$
 BEGIN
-    CREATE TYPE age_range_enum AS ENUM ('age_18_24', 'age_25_34', 'age_35_44', 'age_45_54', 'age_55_plus');
+    CREATE TYPE age_range_enum AS ENUM ('age_13_17', 'age_18_24', 'age_25_34', 'age_35_44', 'age_45_54', 'age_55_plus');
 EXCEPTION
     WHEN duplicate_object THEN NULL;
 END$$;
@@ -241,6 +241,7 @@ CREATE TABLE admin_users (
     admin_user_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     name TEXT NOT NULL,
     email TEXT NOT NULL UNIQUE,
+    password_hash TEXT,
     role admin_role_enum NOT NULL DEFAULT 'admin',
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -351,21 +352,21 @@ CREATE TABLE regulations (
 CREATE TABLE user_profiles (
     user_profile_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     fk_user_id BIGINT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
-    skin_type skin_type_enum NOT NULL DEFAULT 'other',
-    skin_phototype skin_phototype_enum NOT NULL DEFAULT 'iii',
-    has_hyperpigmentation BOOLEAN NOT NULL DEFAULT FALSE,
-    has_melasma BOOLEAN NOT NULL DEFAULT FALSE,
-    has_rosacea BOOLEAN NOT NULL DEFAULT FALSE,
-    has_eczema BOOLEAN NOT NULL DEFAULT FALSE,
+    skin_type skin_type_enum,
+    skin_phototype skin_phototype_enum,
+    has_hyperpigmentation BOOLEAN,
+    has_melasma BOOLEAN,
+    has_rosacea BOOLEAN,
+    has_eczema BOOLEAN,
     hair_type hair_type_enum NOT NULL DEFAULT 'other',
     hair_pattern hair_pattern_enum,
-    scalp_type scalp_type_enum NOT NULL DEFAULT 'other',
-    skin_sensitivity sensitivity_level_enum NOT NULL DEFAULT 'medium',
-    acne_prone BOOLEAN NOT NULL DEFAULT FALSE,
-    age_range age_range_enum NOT NULL DEFAULT 'age_18_24',
-    gender gender_enum NOT NULL DEFAULT 'prefer_not_say',
-    is_pregnant BOOLEAN NOT NULL DEFAULT FALSE,
-    is_breastfeeding BOOLEAN NOT NULL DEFAULT FALSE,
+    scalp_type scalp_type_enum,
+    skin_sensitivity sensitivity_level_enum,
+    acne_prone BOOLEAN,
+    age_range age_range_enum,
+    gender gender_enum,
+    is_pregnant BOOLEAN,
+    is_breastfeeding BOOLEAN,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -378,7 +379,7 @@ CREATE TABLE user_profiles (
         OR (hair_pattern IN ('4A','4B','4C') AND hair_type = 'coily')
     ),
     CONSTRAINT ck_user_profiles_adult_age_range CHECK (
-        age_range IN ('age_18_24','age_25_34','age_35_44','age_45_54','age_55_plus')
+        age_range IN ('age_13_17','age_18_24','age_25_34','age_35_44','age_45_54','age_55_plus')
     )
 );
 
@@ -601,6 +602,8 @@ CREATE TABLE compatibility_rules (
     source_reference TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    is_block BOOLEAN GENERATED ALWAYS AS (effect_type = 'block') STORED,
+    is_alert BOOLEAN GENERATED ALWAYS AS (effect_type = 'alert') STORED,
     UNIQUE (fk_ingredient_effect_id, fk_scoring_model_id)
 );
 
@@ -609,12 +612,12 @@ CREATE TABLE product_scores (
     fk_product_version_id BIGINT NOT NULL REFERENCES product_versions(product_version_id) ON DELETE CASCADE,
     fk_scoring_model_id BIGINT NOT NULL REFERENCES scoring_models(scoring_model_id) ON DELETE RESTRICT,
     overall_score INTEGER NOT NULL DEFAULT 0,
-    health_score INTEGER NOT NULL DEFAULT 0,
-    environmental_score INTEGER NOT NULL DEFAULT 0,
+    health_score INTEGER,
+    environmental_score INTEGER,
     ethical_score INTEGER NOT NULL DEFAULT 0,
     performance_score INTEGER NOT NULL DEFAULT 0,
-    transparency_score INTEGER NOT NULL DEFAULT 0,
-    confidence_score SMALLINT NOT NULL DEFAULT 0,
+    transparency_score INTEGER,
+    confidence_score SMALLINT,
     calculated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -627,12 +630,12 @@ CREATE TABLE analysis_results (
     fk_product_version_id BIGINT NOT NULL REFERENCES product_versions(product_version_id) ON DELETE CASCADE,
     fk_scoring_model_id BIGINT NOT NULL REFERENCES scoring_models(scoring_model_id) ON DELETE RESTRICT,
     overall_score INTEGER NOT NULL DEFAULT 0,
-    health_score INTEGER NOT NULL DEFAULT 0,
-    environmental_score INTEGER NOT NULL DEFAULT 0,
+    health_score INTEGER,
+    environmental_score INTEGER,
     ethical_score INTEGER NOT NULL DEFAULT 0,
     performance_score INTEGER NOT NULL DEFAULT 0,
-    transparency_score INTEGER NOT NULL DEFAULT 0,
-    confidence_score SMALLINT NOT NULL DEFAULT 0,
+    transparency_score INTEGER DEFAULT 0,
+    confidence_score SMALLINT DEFAULT 0,
     processing_time_ms INTEGER NOT NULL DEFAULT 0,
     status analysis_status_enum NOT NULL DEFAULT 'processing',
     summary TEXT NOT NULL DEFAULT '',
@@ -661,7 +664,7 @@ CREATE TABLE personalized_scores (
     fk_analysis_result_id BIGINT NOT NULL REFERENCES analysis_results(analysis_result_id) ON DELETE CASCADE,
     fk_scoring_model_id BIGINT NOT NULL REFERENCES scoring_models(scoring_model_id) ON DELETE RESTRICT,
     final_score INTEGER NOT NULL DEFAULT 0,
-    compatibility_percentage NUMERIC(5,2) NOT NULL DEFAULT 0.00,
+    compatibility_percentage NUMERIC(5,2),
     risk_level risk_level_enum NOT NULL DEFAULT 'low',
     recommendation_level recommendation_level_enum NOT NULL DEFAULT 'acceptable',
     summary TEXT NOT NULL DEFAULT '',
@@ -917,6 +920,18 @@ CREATE TABLE IF NOT EXISTS venus_audit.audit_logs (
 CREATE INDEX IF NOT EXISTS idx_audit_logs_table ON venus_audit.audit_logs (schema_name, table_name, changed_at);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_changed_at ON venus_audit.audit_logs (changed_at);
 
+-- Em ambientes que possuem o papel da API, ela pode inserir auditoria, mas
+-- não alterar nem apagar o histórico. O guarda evita falha no bootstrap local.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'api') THEN
+        GRANT USAGE ON SCHEMA venus_audit TO api;
+        GRANT INSERT ON TABLE venus_audit.audit_logs TO api;
+        GRANT USAGE, SELECT ON SEQUENCE venus_audit.audit_logs_audit_id_seq TO api;
+    END IF;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION venus.fn_touch_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -999,7 +1014,52 @@ BEGIN
     END IF;
 
     RAISE EXCEPTION 'analysis_result % cannot change status from % to %',
-        OLD.analysis_result_id, OLD.status, NEW.status;
+        OLD.analysis_result_id, OLD.status, NEW.status
+    USING ERRCODE = 'VE001';
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION venus.fn_validate_report_status_transition()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+    IF OLD.status = NEW.status THEN RETURN NEW; END IF;
+
+    IF (OLD.status, NEW.status) IN (
+        ('open', 'in_review'),
+        ('in_review', 'resolved'),
+        ('in_review', 'rejected')
+    ) THEN
+        RETURN NEW;
+    END IF;
+
+    RAISE EXCEPTION 'report % cannot change status from % to %',
+        OLD.report_id, OLD.status, NEW.status
+    USING ERRCODE = 'VE001';
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION venus.fn_is_authorized_bootstrap_session()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+STABLE
+AS $$
+DECLARE
+    v_schema_owner NAME;
+BEGIN
+    IF COALESCE(current_setting('venus.bootstrap', true), 'off') <> 'on' THEN
+        RETURN FALSE;
+    END IF;
+
+    SELECT r.rolname
+      INTO v_schema_owner
+      FROM pg_namespace n
+      JOIN pg_roles r ON r.oid = n.nspowner
+     WHERE n.nspname = 'venus';
+
+    RETURN v_schema_owner IS NOT NULL
+       AND (current_user = v_schema_owner OR pg_has_role(current_user, v_schema_owner, 'member'));
 END;
 $$;
 
@@ -1008,7 +1068,7 @@ RETURNS TRIGGER
 LANGUAGE plpgsql
 AS $$
 BEGIN
-    IF COALESCE(current_setting('venus.bootstrap', true), 'off') = 'on' THEN
+    IF venus.fn_is_authorized_bootstrap_session() THEN
         RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
     END IF;
 
@@ -1038,17 +1098,35 @@ $$;
 CREATE OR REPLACE PROCEDURE venus.sp_set_user_active(p_user_id BIGINT, p_active BOOLEAN)
 LANGUAGE plpgsql
 AS $$
+DECLARE
+    v_status venus.user_status_enum;
 BEGIN
+    SELECT status
+      INTO v_status
+      FROM venus.users
+     WHERE user_id = p_user_id;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'usuário % não encontrado', p_user_id;
+    END IF;
+
+    IF v_status IN ('blocked'::venus.user_status_enum, 'pending'::venus.user_status_enum) THEN
+        RAISE EXCEPTION 'usuário % está em status % e não pode ser alterado por sp_set_user_active',
+            p_user_id, v_status
+        USING ERRCODE = 'VE001';
+    END IF;
+
+    IF (v_status = 'active'::venus.user_status_enum AND p_active)
+       OR (v_status = 'inactive'::venus.user_status_enum AND NOT p_active) THEN
+        RETURN;
+    END IF;
+
     UPDATE venus.users
        SET status = CASE
            WHEN p_active THEN 'active'::venus.user_status_enum
            ELSE 'inactive'::venus.user_status_enum
        END
      WHERE user_id = p_user_id;
-
-    IF NOT FOUND THEN
-        RAISE EXCEPTION 'usuário % não encontrado', p_user_id;
-    END IF;
 END;
 $$;
 
@@ -1070,8 +1148,30 @@ BEGIN PERFORM venus.fn_register_user_access(NEW.user_id, 'LOGIN'); RETURN NEW; E
 $$;
 
 CREATE OR REPLACE FUNCTION venus.fn_log_fk_user_activity()
-RETURNS TRIGGER LANGUAGE plpgsql AS $$
-BEGIN PERFORM venus.fn_register_user_access(NEW.fk_user_id, TG_TABLE_NAME); RETURN NEW; END;
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    v_app_user_id BIGINT;
+BEGIN
+    IF venus.fn_is_authorized_bootstrap_session() THEN
+        RETURN NEW;
+    END IF;
+
+    BEGIN
+        v_app_user_id := NULLIF(current_setting('venus.app_user_id', true), '')::BIGINT;
+    EXCEPTION
+        WHEN invalid_text_representation OR numeric_value_out_of_range THEN
+            RETURN NEW;
+    END;
+
+    IF v_app_user_id IS NULL OR NEW.fk_user_id IS DISTINCT FROM v_app_user_id THEN
+        RETURN NEW;
+    END IF;
+
+    PERFORM venus.fn_register_user_access(v_app_user_id, TG_TABLE_NAME);
+    RETURN NEW;
+END;
 $$;
 
 DROP TRIGGER IF EXISTS trg_log_user_login_activity ON venus.users;
@@ -1101,50 +1201,69 @@ CREATE TRIGGER trg_validate_analysis_status_transition
 BEFORE UPDATE OF status ON venus.analysis_results
 FOR EACH ROW EXECUTE FUNCTION venus.fn_validate_analysis_status_transition();
 
-DO $$
+DROP TRIGGER IF EXISTS trg_validate_report_status_transition ON venus.reports;
+CREATE TRIGGER trg_validate_report_status_transition
+BEFORE UPDATE OF status ON venus.reports
+FOR EACH ROW EXECUTE FUNCTION venus.fn_validate_report_status_transition();
+
+CREATE OR REPLACE PROCEDURE venus.sp_sync_standard_triggers()
+LANGUAGE plpgsql
+AS $proc$
 DECLARE r RECORD;
 BEGIN
     FOR r IN
-        SELECT table_schema, table_name
-        FROM information_schema.columns
-        WHERE table_schema = 'venus'
-          AND column_name = 'updated_at'
-          AND table_name NOT IN ('data_catalog', 'data_catalog_rules')
-        GROUP BY table_schema, table_name
+        SELECT c.table_schema, c.table_name
+          FROM information_schema.columns c
+          JOIN information_schema.tables t
+            ON t.table_schema = c.table_schema
+           AND t.table_name = c.table_name
+           AND t.table_type = 'BASE TABLE'
+         WHERE c.table_schema = 'venus'
+           AND c.column_name = 'updated_at'
+           AND c.table_name NOT IN ('data_catalog', 'data_catalog_rules')
+         GROUP BY c.table_schema, c.table_name
     LOOP
         EXECUTE format('DROP TRIGGER IF EXISTS trg_set_updated_at_%I ON %I.%I;', r.table_name, r.table_schema, r.table_name);
         EXECUTE format('CREATE TRIGGER trg_set_updated_at_%I BEFORE UPDATE ON %I.%I FOR EACH ROW EXECUTE FUNCTION venus.fn_touch_updated_at();', r.table_name, r.table_schema, r.table_name);
     END LOOP;
-END
-$$;
 
-DO $$
-DECLARE r RECORD;
-BEGIN
     FOR r IN
         SELECT table_schema, table_name
-        FROM information_schema.tables
-        WHERE table_schema = 'venus'
-          AND table_type = 'BASE TABLE'
-          AND table_name NOT IN ('data_catalog', 'data_catalog_rules')
-        ORDER BY table_name
+          FROM information_schema.tables
+         WHERE table_schema = 'venus'
+           AND table_type = 'BASE TABLE'
+           AND table_name NOT IN ('data_catalog', 'data_catalog_rules')
+         ORDER BY table_name
     LOOP
         EXECUTE format('DROP TRIGGER IF EXISTS trg_audit_%I ON %I.%I;', r.table_name, r.table_schema, r.table_name);
         EXECUTE format('CREATE TRIGGER trg_audit_%I AFTER INSERT OR UPDATE OR DELETE ON %I.%I FOR EACH ROW EXECUTE FUNCTION venus.fn_audit_row();', r.table_name, r.table_schema, r.table_name);
     END LOOP;
-END
-$$;
+END;
+$proc$;
 
-DO $$
-DECLARE r RECORD;
-BEGIN
-    FOR r IN SELECT table_name FROM information_schema.columns
-             WHERE table_schema='venus' AND column_name='fk_user_id'
-               AND table_name IN ('analysis_results','favorites','user_lists','reviews','reports','recommendations','personalized_scores')
-             GROUP BY table_name LOOP
-        EXECUTE format('DROP TRIGGER IF EXISTS trg_activity_%I ON venus.%I;', r.table_name, r.table_name);
-        EXECUTE format('CREATE TRIGGER trg_activity_%I AFTER INSERT OR UPDATE ON venus.%I FOR EACH ROW EXECUTE FUNCTION venus.fn_log_fk_user_activity();', r.table_name, r.table_name);
-    END LOOP;
-END $$;
+CALL venus.sp_sync_standard_triggers();
+
+DROP TRIGGER IF EXISTS trg_activity_recommendations ON venus.recommendations;
+DROP TRIGGER IF EXISTS trg_activity_personalized_scores ON venus.personalized_scores;
+
+DROP TRIGGER IF EXISTS trg_activity_analysis_results ON venus.analysis_results;
+CREATE TRIGGER trg_activity_analysis_results AFTER INSERT OR UPDATE ON venus.analysis_results
+FOR EACH ROW EXECUTE FUNCTION venus.fn_log_fk_user_activity();
+
+DROP TRIGGER IF EXISTS trg_activity_favorites ON venus.favorites;
+CREATE TRIGGER trg_activity_favorites AFTER INSERT OR UPDATE ON venus.favorites
+FOR EACH ROW EXECUTE FUNCTION venus.fn_log_fk_user_activity();
+
+DROP TRIGGER IF EXISTS trg_activity_user_lists ON venus.user_lists;
+CREATE TRIGGER trg_activity_user_lists AFTER INSERT OR UPDATE ON venus.user_lists
+FOR EACH ROW EXECUTE FUNCTION venus.fn_log_fk_user_activity();
+
+DROP TRIGGER IF EXISTS trg_activity_reviews ON venus.reviews;
+CREATE TRIGGER trg_activity_reviews AFTER INSERT OR UPDATE ON venus.reviews
+FOR EACH ROW EXECUTE FUNCTION venus.fn_log_fk_user_activity();
+
+DROP TRIGGER IF EXISTS trg_activity_reports ON venus.reports;
+CREATE TRIGGER trg_activity_reports AFTER INSERT OR UPDATE ON venus.reports
+FOR EACH ROW EXECUTE FUNCTION venus.fn_log_fk_user_activity();
 
 CREATE INDEX IF NOT EXISTS idx_audit_logs_changed_by ON venus_audit.audit_logs(changed_by, changed_at);

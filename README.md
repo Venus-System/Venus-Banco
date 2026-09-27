@@ -37,6 +37,7 @@ O pipeline usa `.env` como configuração padrão. A parte do banco Venus execut
 - `sql/00_schema.sql`: tipos, tabelas, FKs, índices, funções, triggers e auditoria.
 - `sql/05_cloudinary_images.sql`: catálogo canônico de mídia, views e sincronização de metadados Cloudinary; imagens nunca são armazenadas no PostgreSQL.
 - `sql/10_reference_seed.sql`: categorias, tags, claims, modelos e demais dados mestres.
+- `sql/15_scoring_model_category_seed.sql`: pesos iniciais por modelo e categoria de score.
 - `sql/20_regulation_seed.sql`: regulações.
 - `data/venus_v12_load.sql`: fonte grande de ingredientes. O pipeline faz parser, limpeza e resolução de referências em memória.
 - `sql/30_demo_seed.sql`: dados técnicos reproduzíveis para desenvolvimento/testes.

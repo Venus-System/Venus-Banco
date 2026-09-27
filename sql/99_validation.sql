@@ -108,10 +108,10 @@ SELECT 'cloudinary_media_required_metadata' AS check_name, COUNT(*) AS total_nul
 FROM venus.media_assets
 WHERE public_id IS NULL OR BTRIM(public_id)='';
 
-SELECT 'adult_only_age_range' AS check_name,
-       COUNT(*) AS forbidden_minor_rows
+SELECT 'age_13_17_rows' AS check_name,
+       COUNT(*) AS total
 FROM venus.user_profiles
-WHERE age_range::text IN ('under_13','age_13_17');
+WHERE age_range::text = 'age_13_17';
 
 SELECT 'age_range_enum_values' AS check_name,
        string_agg(e.enumlabel, ', ' ORDER BY e.enumsortorder) AS values
