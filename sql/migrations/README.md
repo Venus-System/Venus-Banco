@@ -78,3 +78,15 @@ Em bancos já conciliados manualmente, mantenha o arquivo como registro de
 versionamento e não o execute novamente. Em ambientes existentes que ainda
 estejam no estado anterior, execute-o uma vez após revisar o impacto da
 reintrodução da faixa etária de 13–17 anos.
+
+## API IA e Google Calendar — 2026-09-30
+
+`20260930_001_api_ia_audit_and_google_calendar.sql` deve ser executada por
+um administrador após confirmar que o papel da API se chama `api_ia`. Ela dá
+à API somente a permissão necessária para inserir auditoria e cria
+`venus.google_oauth_tokens`, com token de refresh já cifrado pela aplicação.
+
+A tabela de tokens deliberadamente não recebe trigger de auditoria: duplicar
+credenciais, ainda que cifradas, em `venus_audit.audit_logs` amplia a superfície
+de exposição. A migration também impede que uma execução futura de
+`sp_sync_standard_triggers()` recrie esse trigger.

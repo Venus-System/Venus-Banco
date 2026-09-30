@@ -108,6 +108,16 @@ SELECT 'cloudinary_media_required_metadata' AS check_name, COUNT(*) AS total_nul
 FROM venus.media_assets
 WHERE public_id IS NULL OR BTRIM(public_id)='';
 
+SELECT 'google_oauth_tokens' AS check_name,
+       to_regclass('venus.google_oauth_tokens') IS NOT NULL AS table_exists,
+       NOT EXISTS (
+           SELECT 1
+           FROM pg_trigger
+           WHERE tgrelid = 'venus.google_oauth_tokens'::regclass
+             AND tgname = 'trg_audit_google_oauth_tokens'
+             AND NOT tgisinternal
+       ) AS no_audit_trigger;
+
 SELECT 'age_13_17_rows' AS check_name,
        COUNT(*) AS total
 FROM venus.user_profiles

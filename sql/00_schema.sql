@@ -248,6 +248,20 @@ CREATE TABLE admin_users (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+/*
+  Tokens OAuth do Google são cifrados pela API antes de chegar ao banco.
+  A tabela não recebe trigger de auditoria: replicar o token em audit_logs
+  aumentaria desnecessariamente a superfície de exposição de credenciais.
+*/
+CREATE TABLE google_oauth_tokens (
+    google_oauth_token_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    fk_user_id BIGINT NOT NULL UNIQUE REFERENCES users(user_id) ON DELETE CASCADE,
+    encrypted_refresh_token BYTEA NOT NULL,
+    scope TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 CREATE TABLE allergies (
     allergy_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     allergy_name TEXT NOT NULL UNIQUE,
@@ -932,6 +946,19 @@ BEGIN
 END;
 $$;
 
+-- A API de IA precisa registrar auditoria e gerenciar somente seus tokens OAuth.
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'api_ia') THEN
+        GRANT USAGE ON SCHEMA venus_audit TO api_ia;
+        GRANT INSERT ON TABLE venus_audit.audit_logs TO api_ia;
+        GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA venus_audit TO api_ia;
+        GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE venus.google_oauth_tokens TO api_ia;
+        GRANT USAGE, SELECT ON SEQUENCE venus.google_oauth_tokens_google_oauth_token_id_seq TO api_ia;
+    END IF;
+END;
+$$;
+
 CREATE OR REPLACE FUNCTION venus.fn_touch_updated_at()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -1232,7 +1259,7 @@ BEGIN
           FROM information_schema.tables
          WHERE table_schema = 'venus'
            AND table_type = 'BASE TABLE'
-           AND table_name NOT IN ('data_catalog', 'data_catalog_rules')
+           AND table_name NOT IN ('data_catalog', 'data_catalog_rules', 'google_oauth_tokens')
          ORDER BY table_name
     LOOP
         EXECUTE format('DROP TRIGGER IF EXISTS trg_audit_%I ON %I.%I;', r.table_name, r.table_schema, r.table_name);
