@@ -90,3 +90,12 @@ A tabela de tokens deliberadamente não recebe trigger de auditoria: duplicar
 credenciais, ainda que cifradas, em `venus_audit.audit_logs` amplia a superfície
 de exposição. A migration também impede que uma execução futura de
 `sp_sync_standard_triggers()` recrie esse trigger.
+
+## Capas de listas — 2026-10-01
+
+`20261001_001_user_list_covers.sql` adiciona `description` e `cover_key` em
+`venus.user_lists` e cria a finalidade `list_cover` em `venus.media_assets`.
+Cada lista pode ter no máximo uma capa ativa/pending, e a lista passa a ser a
+única dona da mídia nessa finalidade. As constraints antigas de
+`media_assets` são localizadas pela definição antes de serem substituídas,
+para não depender dos nomes automáticos usados pelo PostgreSQL.

@@ -118,6 +118,20 @@ SELECT 'google_oauth_tokens' AS check_name,
              AND NOT tgisinternal
        ) AS no_audit_trigger;
 
+SELECT 'user_list_media' AS check_name,
+       (SELECT COUNT(*)
+        FROM information_schema.columns
+        WHERE table_schema = 'venus'
+          AND table_name = 'user_lists'
+          AND column_name IN ('description', 'cover_key')) AS list_columns,
+       (SELECT COUNT(*)
+        FROM information_schema.columns
+        WHERE table_schema = 'venus'
+          AND table_name = 'media_assets'
+          AND column_name = 'fk_user_list_id') AS media_owner_column,
+       CASE WHEN to_regclass('venus.ux_media_user_list_cover') IS NOT NULL
+            THEN 1 ELSE 0 END AS unique_cover_index;
+
 SELECT 'age_13_17_rows' AS check_name,
        COUNT(*) AS total
 FROM venus.user_profiles

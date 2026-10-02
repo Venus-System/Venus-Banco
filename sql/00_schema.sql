@@ -714,6 +714,12 @@ CREATE TABLE user_lists (
     user_list_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     fk_user_id BIGINT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     name TEXT NOT NULL,
+    description TEXT
+        CONSTRAINT ck_user_lists_description_length
+        CHECK (description IS NULL OR char_length(description) <= 500),
+    cover_key TEXT
+        CONSTRAINT ck_user_lists_cover_key
+        CHECK (cover_key IS NULL OR cover_key IN ('favoritos', 'escaneados', 'skincare')),
     list_type list_type_enum NOT NULL DEFAULT 'custom',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

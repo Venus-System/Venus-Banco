@@ -1748,6 +1748,35 @@ INSERT INTO venus.data_catalog_rules(object_type,table_name,column_name,table_de
 
 SELECT venus.sync_data_catalog();
 
+INSERT INTO venus.data_catalog_rules (
+    object_type, table_name, column_name, column_description,
+    business_rule, access_level, access_rule, data_classification, notes
+) VALUES
+('COLUMN','user_lists','description',
+ 'Descrição opcional da lista, limitada a 500 caracteres.',
+ 'Texto livre informado pelo usuário.', 'OWNER',
+ 'Somente o dono da lista e a API autorizada.', 'INTERNAL', NULL),
+('COLUMN','user_lists','cover_key',
+ 'Chave da capa padrão exibida pelo aplicativo.',
+ 'Valores aceitos: favoritos, escaneados ou skincare.', 'OWNER',
+ 'Somente o dono da lista e a API autorizada.', 'INTERNAL', NULL),
+('COLUMN','media_assets','fk_user_list_id',
+ 'Lista proprietária de uma capa Cloudinary.',
+ 'Obrigatório quando purpose = list_cover.', 'SYSTEM',
+ 'Backend/API.', 'INTERNAL',
+ 'A capa de lista é uma mídia pertencente à lista.')
+ON CONFLICT (object_type, table_name, column_name) DO UPDATE SET
+    column_description=EXCLUDED.column_description,
+    business_rule=EXCLUDED.business_rule,
+    access_level=EXCLUDED.access_level,
+    access_rule=EXCLUDED.access_rule,
+    data_classification=EXCLUDED.data_classification,
+    notes=EXCLUDED.notes,
+    is_active=TRUE,
+    updated_at=NOW();
+
+SELECT venus.sync_data_catalog();
+
 
 
 SELECT

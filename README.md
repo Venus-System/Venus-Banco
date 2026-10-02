@@ -40,6 +40,7 @@ O pipeline usa `.env` como configuração padrão. A parte do banco Venus execut
 - `sql/15_scoring_model_category_seed.sql`: pesos iniciais por modelo e categoria de score.
 - `sql/20_regulation_seed.sql`: regulações.
 - `sql/migrations/20260930_001_api_ia_audit_and_google_calendar.sql`: permissão de auditoria da API IA e tokens OAuth cifrados do Google Calendar para ambientes existentes.
+- `sql/migrations/20261001_001_user_list_covers.sql`: descrição, capa padrão e capa Cloudinary para listas de usuário.
 - `data/venus_v12_load.sql`: fonte grande de ingredientes. O pipeline faz parser, limpeza e resolução de referências em memória.
 - `sql/30_demo_seed.sql`: dados técnicos reproduzíveis para desenvolvimento/testes.
 - `sql/40_data_catalog.sql`: catálogo técnico de tabelas, colunas e regras.
