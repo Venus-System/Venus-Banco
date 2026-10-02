@@ -3,7 +3,10 @@ CREATE TABLE IF NOT EXISTS venus.media_assets (
     media_asset_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     fk_user_id BIGINT REFERENCES venus.users(user_id) ON DELETE CASCADE,
     fk_product_version_id BIGINT REFERENCES venus.product_versions(product_version_id) ON DELETE CASCADE,
-    purpose TEXT NOT NULL CHECK (purpose IN ('avatar', 'product_photo')),
+    fk_user_list_id BIGINT REFERENCES venus.user_lists(user_list_id) ON DELETE CASCADE,
+    purpose TEXT NOT NULL
+        CONSTRAINT media_assets_purpose_check
+        CHECK (purpose IN ('avatar', 'product_photo', 'list_cover')),
     provider TEXT NOT NULL DEFAULT 'cloudinary' CHECK (provider = 'cloudinary'),
     resource_type TEXT NOT NULL DEFAULT 'image' CHECK (resource_type = 'image'),
     delivery_type TEXT NOT NULL DEFAULT 'upload' CHECK (delivery_type IN ('upload', 'authenticated')),
@@ -22,17 +25,45 @@ CREATE TABLE IF NOT EXISTS venus.media_assets (
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('pending', 'active', 'deleted', 'failed')),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    CHECK (
-        (fk_user_id IS NOT NULL AND fk_product_version_id IS NULL AND purpose = 'avatar')
+    CONSTRAINT ck_media_assets_dono CHECK (
+        (fk_user_id IS NOT NULL AND fk_product_version_id IS NULL AND fk_user_list_id IS NULL AND purpose = 'avatar')
         OR
-        (fk_user_id IS NULL AND fk_product_version_id IS NOT NULL AND purpose = 'product_photo')
+        (fk_user_id IS NULL AND fk_product_version_id IS NOT NULL AND fk_user_list_id IS NULL AND purpose = 'product_photo')
+        OR
+        (fk_user_id IS NULL AND fk_product_version_id IS NULL AND fk_user_list_id IS NOT NULL AND purpose = 'list_cover')
     ),
     CONSTRAINT uq_media_assets_provider_public_id UNIQUE (provider, public_id)
 );
 
+ALTER TABLE venus.media_assets
+    ADD COLUMN IF NOT EXISTS fk_user_list_id BIGINT
+        REFERENCES venus.user_lists(user_list_id) ON DELETE CASCADE;
+
+ALTER TABLE venus.media_assets
+    DROP CONSTRAINT IF EXISTS media_assets_purpose_check,
+    DROP CONSTRAINT IF EXISTS media_assets_check,
+    DROP CONSTRAINT IF EXISTS ck_media_assets_dono,
+    ADD CONSTRAINT media_assets_purpose_check
+        CHECK (purpose IN ('avatar', 'product_photo', 'list_cover')),
+    ADD CONSTRAINT ck_media_assets_dono CHECK (
+        (fk_user_id IS NOT NULL AND fk_product_version_id IS NULL AND fk_user_list_id IS NULL AND purpose = 'avatar')
+        OR
+        (fk_user_id IS NULL AND fk_product_version_id IS NOT NULL AND fk_user_list_id IS NULL AND purpose = 'product_photo')
+        OR
+        (fk_user_id IS NULL AND fk_product_version_id IS NULL AND fk_user_list_id IS NOT NULL AND purpose = 'list_cover')
+    );
+
 CREATE UNIQUE INDEX IF NOT EXISTS ux_media_user_avatar
     ON venus.media_assets (fk_user_id)
     WHERE purpose = 'avatar' AND status IN ('pending', 'active');
+
+CREATE UNIQUE INDEX IF NOT EXISTS ux_media_user_list_cover
+    ON venus.media_assets (fk_user_list_id)
+    WHERE purpose = 'list_cover' AND status IN ('pending', 'active');
+
+CREATE INDEX IF NOT EXISTS idx_media_assets_user_list
+    ON venus.media_assets (fk_user_list_id, updated_at)
+    WHERE purpose = 'list_cover' AND status IN ('pending', 'active');
 
 CREATE INDEX IF NOT EXISTS idx_media_assets_product_version
     ON venus.media_assets (fk_product_version_id, sort_order, media_asset_id)
@@ -138,4 +169,21 @@ SELECT
     m.updated_at
 FROM venus.media_assets m
 WHERE m.purpose = 'product_photo'
+  AND m.status IN ('pending', 'active');
+
+CREATE OR REPLACE VIEW venus.v_user_list_covers AS
+SELECT
+    m.media_asset_id,
+    m.fk_user_list_id AS user_list_id,
+    m.public_id,
+    m.asset_id,
+    m.secure_url,
+    m.format,
+    m.width,
+    m.height,
+    m.bytes,
+    m.alt_text,
+    m.updated_at
+FROM venus.media_assets m
+WHERE m.purpose = 'list_cover'
   AND m.status IN ('pending', 'active');

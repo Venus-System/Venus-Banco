@@ -656,6 +656,7 @@ def main() -> int:
 
             print('[2/10] Inserindo dados mestres e regulações...')
             execute_sql_file(conn, SQL_DIR/'10_reference_seed.sql')
+            execute_sql_file(conn, SQL_DIR/'15_scoring_model_category_seed.sql')
             execute_sql_file(conn, SQL_DIR/'20_regulation_seed.sql')
 
             refs=load_reference_tables(conn)

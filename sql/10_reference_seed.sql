@@ -232,6 +232,7 @@ INSERT INTO profile_tags (name, description, slug, category) VALUES
     ('Olhos Sensíveis', 'Usuário com sensibilidade na região dos olhos', 'olhos-sensiveis', 'health'),
     ('Usuário de Lentes de Contato', 'Usuário que usa lentes de contato', 'usuario-de-lentes-de-contato', 'health'),
     ('Amamentação', 'Usuário em fase de amamentação', 'amamentacao', 'health'),
+    ('Gravidez', 'Usuário durante o período de gravidez', 'gravidez', 'health'),
     ('Manchas Escuras', 'Presença de manchas escuras/hiperpigmentação', 'manchas-escuras', 'health'),
     ('Rugas', 'Presença de rugas', 'rugas', 'health'),
     ('Linhas Finas', 'Presença de linhas finas de expressão', 'linhas-finas', 'health'),
@@ -320,6 +321,14 @@ INSERT INTO profile_tags (name, description, slug, category) VALUES
     ('Rotina Econômica', 'Preferência por rotina econômica', 'rotina-economica', 'values'),
     ('Rotina Minimalista', 'Preferência por rotina simples', 'rotina-minimalista', 'values'),
     ('Rotina Avançada', 'Preferência por rotina com múltiplas etapas', 'rotina-avancada', 'values')
+ON CONFLICT (name) DO NOTHING;
+
+INSERT INTO profile_tags (name, description, slug, category) VALUES
+    ('Organic Ingredients', 'Preferência por produtos que contenham ingredientes orgânicos.', 'organic-ingredients', 'sustainability'),
+    ('Biodegradable Formula', 'Preferência por produtos com formulação biodegradável.', 'biodegradable-formula', 'sustainability'),
+    ('Eco-Friendly Packaging', 'Preferência por produtos com embalagem de menor impacto ambiental.', 'eco-friendly-packaging', 'sustainability'),
+    ('Refillable', 'Preferência por produtos com embalagem ou sistema de refil.', 'refillable', 'sustainability'),
+    ('Recyclable Packaging', 'Preferência por produtos com embalagem reciclável.', 'recyclable-packaging', 'sustainability')
 ON CONFLICT (name) DO NOTHING;
 
 INSERT INTO claims (name, description, claim_type) VALUES

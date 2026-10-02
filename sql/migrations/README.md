@@ -61,3 +61,41 @@ Os scripts-base também foram corrigidos:
 ## Observação sobre dados antigos
 
 Não é seguro inferir `1A/2A/3A/4A` para usuários antigos apenas a partir de `hair_type`. Por isso `hair_pattern` fica `NULL` nos perfis legados até a API/questionário fornecer a resposta específica. O seed demo recebe valores sintéticos coerentes para testes.
+
+## Reconciliação de produção — 2026-09-27
+
+`20260927_001_reconcile_production_schema.sql` registra o estado já aplicado
+em produção e as alterações pendentes de nulidade. Ele torna opcionais os
+campos de perfil que podem não ser informados, preservando `NULL` como
+"desconhecido" (sem substituir por `false`, `other` ou uma faixa etária).
+
+Também registra os campos de score que podem ainda não ter sido calculados,
+as regras de bloqueio, as proteções de auditoria/DAU e a faixa `age_13_17`.
+Assim, a regra histórica de "apenas maiores de 18" deixa de representar o
+estado atual do produto.
+
+Em bancos já conciliados manualmente, mantenha o arquivo como registro de
+versionamento e não o execute novamente. Em ambientes existentes que ainda
+estejam no estado anterior, execute-o uma vez após revisar o impacto da
+reintrodução da faixa etária de 13–17 anos.
+
+## API IA e Google Calendar — 2026-09-30
+
+`20260930_001_api_ia_audit_and_google_calendar.sql` deve ser executada por
+um administrador após confirmar que o papel da API se chama `api_ia`. Ela dá
+à API somente a permissão necessária para inserir auditoria e cria
+`venus.google_oauth_tokens`, com token de refresh já cifrado pela aplicação.
+
+A tabela de tokens deliberadamente não recebe trigger de auditoria: duplicar
+credenciais, ainda que cifradas, em `venus_audit.audit_logs` amplia a superfície
+de exposição. A migration também impede que uma execução futura de
+`sp_sync_standard_triggers()` recrie esse trigger.
+
+## Capas de listas — 2026-10-01
+
+`20261001_001_user_list_covers.sql` adiciona `description` e `cover_key` em
+`venus.user_lists` e cria a finalidade `list_cover` em `venus.media_assets`.
+Cada lista pode ter no máximo uma capa ativa/pending, e a lista passa a ser a
+única dona da mídia nessa finalidade. As constraints antigas de
+`media_assets` são localizadas pela definição antes de serem substituídas,
+para não depender dos nomes automáticos usados pelo PostgreSQL.

@@ -1748,6 +1748,35 @@ INSERT INTO venus.data_catalog_rules(object_type,table_name,column_name,table_de
 
 SELECT venus.sync_data_catalog();
 
+INSERT INTO venus.data_catalog_rules (
+    object_type, table_name, column_name, column_description,
+    business_rule, access_level, access_rule, data_classification, notes
+) VALUES
+('COLUMN','user_lists','description',
+ 'Descrição opcional da lista, limitada a 500 caracteres.',
+ 'Texto livre informado pelo usuário.', 'OWNER',
+ 'Somente o dono da lista e a API autorizada.', 'INTERNAL', NULL),
+('COLUMN','user_lists','cover_key',
+ 'Chave da capa padrão exibida pelo aplicativo.',
+ 'Valores aceitos: favoritos, escaneados ou skincare.', 'OWNER',
+ 'Somente o dono da lista e a API autorizada.', 'INTERNAL', NULL),
+('COLUMN','media_assets','fk_user_list_id',
+ 'Lista proprietária de uma capa Cloudinary.',
+ 'Obrigatório quando purpose = list_cover.', 'SYSTEM',
+ 'Backend/API.', 'INTERNAL',
+ 'A capa de lista é uma mídia pertencente à lista.')
+ON CONFLICT (object_type, table_name, column_name) DO UPDATE SET
+    column_description=EXCLUDED.column_description,
+    business_rule=EXCLUDED.business_rule,
+    access_level=EXCLUDED.access_level,
+    access_rule=EXCLUDED.access_rule,
+    data_classification=EXCLUDED.data_classification,
+    notes=EXCLUDED.notes,
+    is_active=TRUE,
+    updated_at=NOW();
+
+SELECT venus.sync_data_catalog();
+
 
 
 SELECT
@@ -1816,5 +1845,37 @@ ON CONFLICT (object_type, table_name, column_name) DO UPDATE SET
     column_description=EXCLUDED.column_description, business_rule=EXCLUDED.business_rule, access_level=EXCLUDED.access_level,
     access_rule=EXCLUDED.access_rule, data_classification=EXCLUDED.data_classification, notes=EXCLUDED.notes,
     is_active=TRUE, updated_at=NOW();
+
+INSERT INTO venus.data_catalog_rules (
+    object_type, table_name, column_name, table_description, column_description,
+    business_rule, access_level, access_rule, data_classification,
+    sensitivity_reason, retention_policy, notes
+) VALUES
+('TABLE','google_oauth_tokens','',
+ 'Tokens OAuth cifrados para consulta de disponibilidade no Google Calendar.',NULL,
+ 'Uma linha por usuário; remoção do usuário remove o token.','SYSTEM',
+ 'Somente API IA autenticada; sem acesso direto por cliente.','RESTRICTED',
+ 'Refresh token é credencial persistente, ainda que cifrada.',
+ 'Remover em desconexão do Google ou exclusão da conta.',
+ 'Não possui trigger de auditoria para não replicar credenciais.'),
+('COLUMN','google_oauth_tokens','encrypted_refresh_token',NULL,
+ 'Refresh token OAuth cifrado com chave mantida fora do banco.',
+ 'Nunca armazenar token em texto puro nem replicá-lo em logs.','SYSTEM',
+ 'Somente API IA autenticada.','RESTRICTED',
+ 'Credencial de acesso à agenda do usuário.',
+ 'Remover em desconexão do Google ou exclusão da conta.',
+ 'Não expor em consultas operacionais ou auditoria.')
+ON CONFLICT (object_type, table_name, column_name) DO UPDATE SET
+    table_description=EXCLUDED.table_description,
+    column_description=EXCLUDED.column_description,
+    business_rule=EXCLUDED.business_rule,
+    access_level=EXCLUDED.access_level,
+    access_rule=EXCLUDED.access_rule,
+    data_classification=EXCLUDED.data_classification,
+    sensitivity_reason=EXCLUDED.sensitivity_reason,
+    retention_policy=EXCLUDED.retention_policy,
+    notes=EXCLUDED.notes,
+    is_active=TRUE,
+    updated_at=NOW();
 
 SELECT venus.sync_data_catalog();
