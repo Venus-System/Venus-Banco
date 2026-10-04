@@ -108,10 +108,34 @@ SELECT 'cloudinary_media_required_metadata' AS check_name, COUNT(*) AS total_nul
 FROM venus.media_assets
 WHERE public_id IS NULL OR BTRIM(public_id)='';
 
-SELECT 'adult_only_age_range' AS check_name,
-       COUNT(*) AS forbidden_minor_rows
+SELECT 'google_oauth_tokens' AS check_name,
+       to_regclass('venus.google_oauth_tokens') IS NOT NULL AS table_exists,
+       NOT EXISTS (
+           SELECT 1
+           FROM pg_trigger
+           WHERE tgrelid = 'venus.google_oauth_tokens'::regclass
+             AND tgname = 'trg_audit_google_oauth_tokens'
+             AND NOT tgisinternal
+       ) AS no_audit_trigger;
+
+SELECT 'user_list_media' AS check_name,
+       (SELECT COUNT(*)
+        FROM information_schema.columns
+        WHERE table_schema = 'venus'
+          AND table_name = 'user_lists'
+          AND column_name IN ('description', 'cover_key')) AS list_columns,
+       (SELECT COUNT(*)
+        FROM information_schema.columns
+        WHERE table_schema = 'venus'
+          AND table_name = 'media_assets'
+          AND column_name = 'fk_user_list_id') AS media_owner_column,
+       CASE WHEN to_regclass('venus.ux_media_user_list_cover') IS NOT NULL
+            THEN 1 ELSE 0 END AS unique_cover_index;
+
+SELECT 'age_13_17_rows' AS check_name,
+       COUNT(*) AS total
 FROM venus.user_profiles
-WHERE age_range::text IN ('under_13','age_13_17');
+WHERE age_range::text = 'age_13_17';
 
 SELECT 'age_range_enum_values' AS check_name,
        string_agg(e.enumlabel, ', ' ORDER BY e.enumsortorder) AS values

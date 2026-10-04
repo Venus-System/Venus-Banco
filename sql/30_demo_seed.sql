@@ -1307,6 +1307,59 @@ CROSS JOIN LATERAL (
 ON CONFLICT (fk_ingredient_effect_id, fk_scoring_model_id)
 DO NOTHING;
 
+/* Regras de bloqueio para preferências que não admitem equivalência parcial. */
+WITH block_targets (profile_slug, effect_name, reason) AS (
+    VALUES
+        ('sem-parabenos', 'Presença de parabeno',
+         'BLOCK: ingrediente incompatível com o profile Sem Parabenos.'),
+        ('sem-silicone', 'Presença de silicone/siloxano',
+         'BLOCK: ingrediente incompatível com o profile Sem Silicone.'),
+        ('sem-sulfato', 'Presença de sulfato',
+         'BLOCK: ingrediente incompatível com o profile Sem Sulfato.')
+)
+INSERT INTO compatibility_rules (
+    fk_ingredient_effect_id, fk_scoring_model_id, effect_type, score_delta,
+    weight, priority, has_concentration_factor, is_enabled, evidence_level,
+    reason, source_type, source_reference
+)
+SELECT
+    ie.ingredient_effect_id,
+    sm.scoring_model_id,
+    'block'::venus.effect_type_enum,
+    -100,
+    1.00,
+    100,
+    FALSE,
+    TRUE,
+    ie.evidence_level,
+    bt.reason,
+    'system'::venus.source_type_enum,
+    'VENUS_BLOCK_RULES_V1'
+FROM ingredient_effects ie
+JOIN profile_tags pt ON pt.profile_tag_id = ie.fk_profile_tag_id
+JOIN block_targets bt ON bt.profile_slug = pt.slug AND bt.effect_name = ie.effect_name
+CROSS JOIN LATERAL (
+    SELECT scoring_model_id
+    FROM scoring_models
+    WHERE is_active = TRUE
+    ORDER BY CASE WHEN lower(name) = lower('Recomendação Geral') THEN 0 ELSE 1 END,
+             scoring_model_id
+    LIMIT 1
+) sm
+ON CONFLICT (fk_ingredient_effect_id, fk_scoring_model_id)
+DO UPDATE SET
+    effect_type = EXCLUDED.effect_type,
+    score_delta = EXCLUDED.score_delta,
+    weight = EXCLUDED.weight,
+    priority = EXCLUDED.priority,
+    has_concentration_factor = EXCLUDED.has_concentration_factor,
+    is_enabled = EXCLUDED.is_enabled,
+    evidence_level = EXCLUDED.evidence_level,
+    reason = EXCLUDED.reason,
+    source_type = EXCLUDED.source_type,
+    source_reference = EXCLUDED.source_reference,
+    updated_at = NOW();
+
 
 INSERT INTO analysis_results
 (
