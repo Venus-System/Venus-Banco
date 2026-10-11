@@ -256,7 +256,6 @@ BEGIN
     );
 END;
 $$;
-
 CREATE OR REPLACE PROCEDURE venus.sp_register_product_composition(
     p_product_version_id BIGINT,
     p_source_type TEXT,
