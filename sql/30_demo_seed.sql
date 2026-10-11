@@ -384,12 +384,12 @@ LEFT JOIN (VALUES
 ('cerave-oleo-de-limpeza-hidratante','F.I.L. Y70024722/1','F.I.L. Y70024722/1','verified'),
 ('cerave-creme-reparador-para-maos','F.I.L. D215085/2','F.I.L. D215085/2','verified'),
 ('cerave-sa-creme-renovador-pes','F.I.L. D215076/3','F.I.L. D215076/3','verified'),
-('cerave-espuma-cremosa-limpeza-hidratante',NULL,NULL,'needs_review'),
+('cerave-espuma-cremosa-limpeza-hidratante','F.I.L. D253447/1','F.I.L. D253447/1','verified'),
 ('cerave-creme-reparador-olhos',NULL,NULL,'needs_review'),
 ('cerave-serum-hidratante-acido-hialuronico',NULL,NULL,'needs_review'),
 ('cerave-serum-retinol-refinador',NULL,NULL,'needs_review'),
 ('cerave-serum-renovador',NULL,NULL,'needs_review'),
-('cerave-creme-espuma-hidratante',NULL,NULL,'needs_review'),
+('cerave-creme-espuma-hidratante','F.I.L. D253447/1','F.I.L. D253447/1','verified'),
 ('cerave-hidratante-facial-fps30',NULL,NULL,'needs_review'),
 ('lrp-effaclar-gel-concentrado','OFFICIAL-BR-LRP-EFFACLAR-GEL','OFFICIAL-BR-LRP-EFFACLAR-GEL','verified'),
 ('lrp-effaclar-gel-alta-tolerancia','OFFICIAL-BR-LRP-EFFACLAR-ALTA-TOLERANCIA','OFFICIAL-BR-LRP-EFFACLAR-ALTA-TOLERANCIA','verified'),
@@ -432,6 +432,41 @@ LEFT JOIN (VALUES
 ) AS v(slug,version_name,signature,status) ON v.slug=p.slug
 ON CONFLICT (fk_product_id, formula_signature) DO NOTHING;
 
+/*
+  Estes INCI da fórmula não estavam na carga-base v12. O cadastro é
+  deliberadamente mínimo: sem riscos, propriedades ou funções científicas
+  inventadas; a curadoria pode enriquecê-los posteriormente.
+*/
+INSERT INTO ingredients
+    (fk_ingredient_category_id, inci_name, common_name, function_summary,
+     description, source_type, source_reference)
+SELECT
+    ic.ingredient_category_id,
+    missing.inci_name,
+    '', '', '', 'official_site',
+    'https://www.cerave.com.br/todos-os-produtos/espuma-cremosa-de-limpeza-hidratante'
+FROM ingredient_categories ic
+ CROSS JOIN (
+      VALUES
+          ('ASPARTIC ACID'),
+          ('CERAMIDE NP'),
+          ('CERAMIDE AP'),
+          ('CERAMIDE EOP'),
+          ('THREONINE'),
+          ('PROLINE'),
+          ('PHENYLALANINE'),
+          ('HYDROXYETHYL UREA'),
+          ('PHYTOSPHINGOSINE'),
+          ('POLYQUATERNIUM-53'),
+          ('HYDROXYETHYL ACRYLATE/SODIUM ACRYLOYLDIMETHYL TAURATE COPOLYMER')
+  ) AS missing(inci_name)
+WHERE ic.name = 'Não classificado'
+  AND NOT EXISTS (
+      SELECT 1 FROM ingredients i
+      WHERE UPPER(TRIM(i.inci_name)) = UPPER(TRIM(missing.inci_name))
+  )
+ON CONFLICT (inci_name) DO NOTHING;
+
 INSERT INTO product_labels (fk_product_version_id, normalized_text, language, source_type, source_reference)
 SELECT pv.product_version_id,
        COALESCE(f.normalized_text, 'CATÁLOGO OFICIAL — composição integral não capturada nesta carga; consultar a embalagem/página oficial antes da validação.'),
@@ -453,6 +488,7 @@ LEFT JOIN (VALUES
 ('F.I.L. Y70024722/1','Aqua, Glycerin, PEG-200 Hydrogenated Glyceryl Palmate, Coco-Betaine, Disodium Cocoyl Glutamate, PEG-120 Methyl Glucose Dioleate, Polysorbate 20, PEG-7 Glyceryl Cocoate, PEG-150 Pentaerythrityl Tetrastearate, PPG-5-Ceteth-20, PEG-6 Caprylic/Capric Glycerides, Ceramide EOP, Squalane, Ceramide NP, Ceramide AP, Carbomer, Triethyl Citrate, Sodium Chloride, Sodium Hydroxide, Sodium Cocoyl Glutamate, Sodium Benzoate, Sodium Lauroyl Lactylate, Sodium Hyaluronate, Cholesterol, Citric Acid, Capryloyl Glycine, Hydroxyacetophenone, Caprylyl Glycol, Trisodium Ethylenediamine Disuccinate, Phytosphingosine, Xanthan Gum, Benzoic Acid','https://www.cerave.com.br/todos-os-produtos/oleo-de-limpeza-hidratante'),
 ('F.I.L. D215085/2','Aqua, Glycerin, Cetearyl Alcohol, Caprylic/Capric Triglyceride, Cetyl Alcohol, Ceteareth-20, Petrolatum, Behentrimonium Methosulfate, Carbomer, Ceramide AP, Ceramide EOP, Ceramide NP, Cholesterol, Dimethicone, Dipotassium Phosphate, Disodium EDTA, Ethylhexylglycerin, Phenoxyethanol, Phytosphingosine, Potassium Phosphate, Sodium Hyaluronate, Sodium Lauroyl Lactylate, Tocopherol, Xanthan Gum','https://www.cerave.com.br/todos-os-produtos/creme-reparador-para-maos'),
 ('F.I.L. D215076/3','Aqua, Glycerin, Mineral Oil, Glyceryl Stearate SE, Cetearyl Alcohol, Niacinamide, Cetyl Alcohol, Ammonium Lactate, Trolamine, Salicylic Acid, Behentrimonium Methosulfate, Macrogol 100 Stearate, Phenoxyethanol, Dimethicone, Sodium Lauroyl Lactylate, Disodium EDTA, Ceramide NP, Ceramide AP, Phytosphingosine, Cholesterol, Xanthan Gum, Carbomer, Ethylhexylglycerin, Sodium Hyaluronate, Ceramide EOP','https://www.cerave.com.br/todos-os-produtos/sa-creme-renovador-para-os-pes'),
+('F.I.L. D253447/1','Aqua, Glycerin, Sodium Methyl Cocoyl Taurate, Coco-Betaine, Sodium Cocoyl Isethionate, Sodium Chloride, PCA, PPG-5-Ceteth-20, PEG-100 Stearate, PEG-150 Pentaerythrityl Tetrastearate, PEG-6 Caprylic/Capric Glycerides, PEG-30 Dipolyhydroxystearate, CI 77891 / Titanium Dioxide, Aspartic Acid, Ceramide NP, Ceramide AP, Ceramide EOP, Sorbitan Isostearate, Carbomer, Glycol Distearate, Glyceryl Stearate, Glyceryl Oleate, Glycine, Trideceth-6, Cetearyl Alcohol, Behentrimonium Methosulfate, Threonine, Sodium Hydroxide, Salicylic Acid, Sodium PCA, Sodium Lactate, Arginine, Sodium Lauroyl Lactylate, Serine, Sodium Benzoate, Valine, Sodium Hyaluronate, Proline, Isoleucine, Cholesterol, Phenoxyethanol, Alanine, Phenylalanine, Coconut Acid, Coco-Glucoside, Chlorphenesin, Disodium EDTA, Hydroxyethyl Urea, Citric Acid, Hydroxyethyl Acrylate/Sodium Acryloyldimethyl Taurate Copolymer, Caprylyl Glycol, Phytosphingosine, Xanthan Gum, Histidine, Acrylates/C10-30 Alkyl Acrylate Crosspolymer, Polyquaternium-53, Polyquaternium-39, Polysorbate 60, Ethylhexylglycerin, Benzoic Acid','https://www.cerave.com.br/todos-os-produtos/espuma-cremosa-de-limpeza-hidratante'),
 ('OFFICIAL-BR-LRP-EFFACLAR-GEL','Aqua, Sodium Laureth Sulfate, Decyl Glucoside, Glycerin, Sodium Chloride, Coco-Betaine, Salicylic Acid, PEG-150 Pentaerythrityl Tetrastearate, PEG-6 Caprylic/Capric Glycerides, Zinc Gluconate, Sodium Hydroxide, Capryloyl Salicylic Acid, Tetrasodium EDTA, Citric Acid, Menthol, Polyquaternium-47','https://www.laroche-posay.com.br/effaclar/gel-concentrado'),
 ('OFFICIAL-BR-LRP-EFFACLAR-ALTA-TOLERANCIA','Aqua, Sodium Laureth Sulfate, PEG-8, Coco-Betaine, Hexylene Glycol, Sodium Chloride, PEG-120 Methyl Glucose Dioleate, Zinc PCA, Sodium Hydroxide, Propylene Glycol, Citric Acid, Sodium Benzoate, Phenoxyethanol, Caprylyl Glycol, Parfum','https://www.laroche-posay.com.br/effaclar/gel-alta-tolerancia'),
 ('OFFICIAL-BR-LRP-EFFACLAR-SABONETE','Sodium Stearate, Sodium Palmate, Sodium Palm Kernelate, Aqua, Salicylic Acid, Glycerin, Parfum, Perlite, Capryloyl Salicylic Acid, Titanium Dioxide, Etidronic Acid, Phenoxyethanol, Sodium Chloride, Sodium Hydroxide, Tetrasodium EDTA, Zinc PCA','https://www.laroche-posay.com.br/effaclar/sabonete-concentrado'),
@@ -858,6 +894,126 @@ INSERT INTO tmp_seed_formula VALUES
 ('cerave-sa-creme-renovador-pes',23,'Ethylhexylglycerin'),
 ('cerave-sa-creme-renovador-pes',24,'Sodium Hyaluronate'),
 ('cerave-sa-creme-renovador-pes',25,'Ceramide EOP'),
+('cerave-espuma-cremosa-limpeza-hidratante',1,'Aqua'),
+('cerave-espuma-cremosa-limpeza-hidratante',2,'Glycerin'),
+('cerave-espuma-cremosa-limpeza-hidratante',3,'Sodium Methyl Cocoyl Taurate'),
+('cerave-espuma-cremosa-limpeza-hidratante',4,'Coco-Betaine'),
+('cerave-espuma-cremosa-limpeza-hidratante',5,'Sodium Cocoyl Isethionate'),
+('cerave-espuma-cremosa-limpeza-hidratante',6,'Sodium Chloride'),
+('cerave-espuma-cremosa-limpeza-hidratante',7,'PCA'),
+('cerave-espuma-cremosa-limpeza-hidratante',8,'PPG-5-Ceteth-20'),
+('cerave-espuma-cremosa-limpeza-hidratante',9,'PEG-100 Stearate'),
+('cerave-espuma-cremosa-limpeza-hidratante',10,'PEG-150 Pentaerythrityl Tetrastearate'),
+('cerave-espuma-cremosa-limpeza-hidratante',11,'PEG-6 Caprylic/Capric Glycerides'),
+('cerave-espuma-cremosa-limpeza-hidratante',12,'PEG-30 Dipolyhydroxystearate'),
+('cerave-espuma-cremosa-limpeza-hidratante',13,'CI 77891'),
+('cerave-espuma-cremosa-limpeza-hidratante',14,'Aspartic Acid'),
+('cerave-espuma-cremosa-limpeza-hidratante',15,'Ceramide NP'),
+('cerave-espuma-cremosa-limpeza-hidratante',16,'Ceramide AP'),
+('cerave-espuma-cremosa-limpeza-hidratante',17,'Ceramide EOP'),
+('cerave-espuma-cremosa-limpeza-hidratante',18,'Sorbitan Isostearate'),
+('cerave-espuma-cremosa-limpeza-hidratante',19,'Carbomer'),
+('cerave-espuma-cremosa-limpeza-hidratante',20,'Glycol Distearate'),
+('cerave-espuma-cremosa-limpeza-hidratante',21,'Glyceryl Stearate'),
+('cerave-espuma-cremosa-limpeza-hidratante',22,'Glyceryl Oleate'),
+('cerave-espuma-cremosa-limpeza-hidratante',23,'Glycine'),
+('cerave-espuma-cremosa-limpeza-hidratante',24,'Trideceth-6'),
+('cerave-espuma-cremosa-limpeza-hidratante',25,'Cetearyl Alcohol'),
+('cerave-espuma-cremosa-limpeza-hidratante',26,'Behentrimonium Methosulfate'),
+('cerave-espuma-cremosa-limpeza-hidratante',27,'Threonine'),
+('cerave-espuma-cremosa-limpeza-hidratante',28,'Sodium Hydroxide'),
+('cerave-espuma-cremosa-limpeza-hidratante',29,'Salicylic Acid'),
+('cerave-espuma-cremosa-limpeza-hidratante',30,'Sodium PCA'),
+('cerave-espuma-cremosa-limpeza-hidratante',31,'Sodium Lactate'),
+('cerave-espuma-cremosa-limpeza-hidratante',32,'Arginine'),
+('cerave-espuma-cremosa-limpeza-hidratante',33,'Sodium Lauroyl Lactylate'),
+('cerave-espuma-cremosa-limpeza-hidratante',34,'Serine'),
+('cerave-espuma-cremosa-limpeza-hidratante',35,'Sodium Benzoate'),
+('cerave-espuma-cremosa-limpeza-hidratante',36,'Valine'),
+('cerave-espuma-cremosa-limpeza-hidratante',37,'Sodium Hyaluronate'),
+('cerave-espuma-cremosa-limpeza-hidratante',38,'Proline'),
+('cerave-espuma-cremosa-limpeza-hidratante',39,'Isoleucine'),
+('cerave-espuma-cremosa-limpeza-hidratante',40,'Cholesterol'),
+('cerave-espuma-cremosa-limpeza-hidratante',41,'Phenoxyethanol'),
+('cerave-espuma-cremosa-limpeza-hidratante',42,'Alanine'),
+('cerave-espuma-cremosa-limpeza-hidratante',43,'Phenylalanine'),
+('cerave-espuma-cremosa-limpeza-hidratante',44,'Coconut Acid'),
+('cerave-espuma-cremosa-limpeza-hidratante',45,'Coco-Glucoside'),
+('cerave-espuma-cremosa-limpeza-hidratante',46,'Chlorphenesin'),
+('cerave-espuma-cremosa-limpeza-hidratante',47,'Disodium EDTA'),
+('cerave-espuma-cremosa-limpeza-hidratante',48,'Hydroxyethyl Urea'),
+('cerave-espuma-cremosa-limpeza-hidratante',49,'Citric Acid'),
+('cerave-espuma-cremosa-limpeza-hidratante',50,'Hydroxyethyl Acrylate/Sodium Acryloyldimethyl Taurate Copolymer'),
+('cerave-espuma-cremosa-limpeza-hidratante',51,'Caprylyl Glycol'),
+('cerave-espuma-cremosa-limpeza-hidratante',52,'Phytosphingosine'),
+('cerave-espuma-cremosa-limpeza-hidratante',53,'Xanthan Gum'),
+('cerave-espuma-cremosa-limpeza-hidratante',54,'Histidine'),
+('cerave-espuma-cremosa-limpeza-hidratante',55,'Acrylates/C10-30 Alkyl Acrylate Crosspolymer'),
+('cerave-espuma-cremosa-limpeza-hidratante',56,'Polyquaternium-53'),
+('cerave-espuma-cremosa-limpeza-hidratante',57,'Polyquaternium-39'),
+('cerave-espuma-cremosa-limpeza-hidratante',58,'Polysorbate 60'),
+('cerave-espuma-cremosa-limpeza-hidratante',59,'Ethylhexylglycerin'),
+('cerave-espuma-cremosa-limpeza-hidratante',60,'Benzoic Acid'),
+('cerave-creme-espuma-hidratante',1,'Aqua'),
+('cerave-creme-espuma-hidratante',2,'Glycerin'),
+('cerave-creme-espuma-hidratante',3,'Sodium Methyl Cocoyl Taurate'),
+('cerave-creme-espuma-hidratante',4,'Coco-Betaine'),
+('cerave-creme-espuma-hidratante',5,'Sodium Cocoyl Isethionate'),
+('cerave-creme-espuma-hidratante',6,'Sodium Chloride'),
+('cerave-creme-espuma-hidratante',7,'PCA'),
+('cerave-creme-espuma-hidratante',8,'PPG-5-Ceteth-20'),
+('cerave-creme-espuma-hidratante',9,'PEG-100 Stearate'),
+('cerave-creme-espuma-hidratante',10,'PEG-150 Pentaerythrityl Tetrastearate'),
+('cerave-creme-espuma-hidratante',11,'PEG-6 Caprylic/Capric Glycerides'),
+('cerave-creme-espuma-hidratante',12,'PEG-30 Dipolyhydroxystearate'),
+('cerave-creme-espuma-hidratante',13,'CI 77891'),
+('cerave-creme-espuma-hidratante',14,'Aspartic Acid'),
+('cerave-creme-espuma-hidratante',15,'Ceramide NP'),
+('cerave-creme-espuma-hidratante',16,'Ceramide AP'),
+('cerave-creme-espuma-hidratante',17,'Ceramide EOP'),
+('cerave-creme-espuma-hidratante',18,'Sorbitan Isostearate'),
+('cerave-creme-espuma-hidratante',19,'Carbomer'),
+('cerave-creme-espuma-hidratante',20,'Glycol Distearate'),
+('cerave-creme-espuma-hidratante',21,'Glyceryl Stearate'),
+('cerave-creme-espuma-hidratante',22,'Glyceryl Oleate'),
+('cerave-creme-espuma-hidratante',23,'Glycine'),
+('cerave-creme-espuma-hidratante',24,'Trideceth-6'),
+('cerave-creme-espuma-hidratante',25,'Cetearyl Alcohol'),
+('cerave-creme-espuma-hidratante',26,'Behentrimonium Methosulfate'),
+('cerave-creme-espuma-hidratante',27,'Threonine'),
+('cerave-creme-espuma-hidratante',28,'Sodium Hydroxide'),
+('cerave-creme-espuma-hidratante',29,'Salicylic Acid'),
+('cerave-creme-espuma-hidratante',30,'Sodium PCA'),
+('cerave-creme-espuma-hidratante',31,'Sodium Lactate'),
+('cerave-creme-espuma-hidratante',32,'Arginine'),
+('cerave-creme-espuma-hidratante',33,'Sodium Lauroyl Lactylate'),
+('cerave-creme-espuma-hidratante',34,'Serine'),
+('cerave-creme-espuma-hidratante',35,'Sodium Benzoate'),
+('cerave-creme-espuma-hidratante',36,'Valine'),
+('cerave-creme-espuma-hidratante',37,'Sodium Hyaluronate'),
+('cerave-creme-espuma-hidratante',38,'Proline'),
+('cerave-creme-espuma-hidratante',39,'Isoleucine'),
+('cerave-creme-espuma-hidratante',40,'Cholesterol'),
+('cerave-creme-espuma-hidratante',41,'Phenoxyethanol'),
+('cerave-creme-espuma-hidratante',42,'Alanine'),
+('cerave-creme-espuma-hidratante',43,'Phenylalanine'),
+('cerave-creme-espuma-hidratante',44,'Coconut Acid'),
+('cerave-creme-espuma-hidratante',45,'Coco-Glucoside'),
+('cerave-creme-espuma-hidratante',46,'Chlorphenesin'),
+('cerave-creme-espuma-hidratante',47,'Disodium EDTA'),
+('cerave-creme-espuma-hidratante',48,'Hydroxyethyl Urea'),
+('cerave-creme-espuma-hidratante',49,'Citric Acid'),
+('cerave-creme-espuma-hidratante',50,'Hydroxyethyl Acrylate/Sodium Acryloyldimethyl Taurate Copolymer'),
+('cerave-creme-espuma-hidratante',51,'Caprylyl Glycol'),
+('cerave-creme-espuma-hidratante',52,'Phytosphingosine'),
+('cerave-creme-espuma-hidratante',53,'Xanthan Gum'),
+('cerave-creme-espuma-hidratante',54,'Histidine'),
+('cerave-creme-espuma-hidratante',55,'Acrylates/C10-30 Alkyl Acrylate Crosspolymer'),
+('cerave-creme-espuma-hidratante',56,'Polyquaternium-53'),
+('cerave-creme-espuma-hidratante',57,'Polyquaternium-39'),
+('cerave-creme-espuma-hidratante',58,'Polysorbate 60'),
+('cerave-creme-espuma-hidratante',59,'Ethylhexylglycerin'),
+('cerave-creme-espuma-hidratante',60,'Benzoic Acid'),
 ('lrp-effaclar-gel-concentrado',1,'Aqua'),
 ('lrp-effaclar-gel-concentrado',2,'Sodium Laureth Sulfate'),
 ('lrp-effaclar-gel-concentrado',3,'Decyl Glucoside'),
@@ -1171,36 +1327,14 @@ FROM tmp_seed_match
 WHERE ingredient_id IS NULL
 ORDER BY slug,position;
 
+/*
+  Scores de produto não são dados de seed.
 
-
-INSERT INTO product_scores
-(
-    fk_product_version_id,
-    fk_scoring_model_id,
-    overall_score,
-    health_score,
-    environmental_score,
-    ethical_score,
-    performance_score,
-    transparency_score,
-    confidence_score
-)
-SELECT
-    pv.product_version_id,
-    sm.scoring_model_id,
-    0, 0, 0, 0, 0, 0, 0
-FROM product_versions pv
-CROSS JOIN LATERAL (
-    SELECT scoring_model_id
-    FROM scoring_models
-    WHERE is_active = TRUE
-    ORDER BY
-        CASE WHEN lower(name) = lower('Recomendação Geral') THEN 0 ELSE 1 END,
-        scoring_model_id
-    LIMIT 1
-) sm
-ON CONFLICT (fk_product_version_id, fk_scoring_model_id)
-DO NOTHING;
+  O valor correto depende da API Venus-Classificacao e deve ser gravado pelo
+  endpoint oficial de base scores após a composição estar disponível. Criar
+  linhas com score 0 aqui faz o catálogo confundir "não calculado" com um
+  resultado real e impede a distinção entre score e produto em análise.
+*/
 
 
 INSERT INTO favorites (fk_user_id, fk_product_id)
@@ -1361,43 +1495,10 @@ DO UPDATE SET
     updated_at = NOW();
 
 
-INSERT INTO analysis_results
-(
-    fk_user_id,
-    fk_product_version_id,
-    fk_scoring_model_id,
-    overall_score,
-    health_score,
-    environmental_score,
-    ethical_score,
-    performance_score,
-    transparency_score,
-    confidence_score,
-    processing_time_ms,
-    status,
-    summary
-)
-SELECT
-    u.user_id,
-    pv.product_version_id,
-    sm.scoring_model_id,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    'completed'::venus.analysis_status_enum,
-    'SEED TÉCNICO: análise criada para validar o relacionamento usuário x produto.'
-FROM product_versions pv
-JOIN users u
-  ON u.firebase_uid = 'venus-seed-user-' ||
-     LPAD((((pv.product_version_id - 1) % 40) + 1)::TEXT, 3, '0')
-CROSS JOIN LATERAL (
-    SELECT scoring_model_id
-    FROM scoring_models
-    WHERE is_active = TRUE
-    ORDER BY
-        CASE WHEN lower(name) = lower('Recomendação Geral') THEN 0 ELSE 1 END,
-        scoring_model_id
-    LIMIT 1
-) sm
-ON CONFLICT DO NOTHING;
+/*
+  Análises de usuário também não são seed. Elas representam uma execução real
+  da classificação e devem ser criadas pela API, com scores e regras reais.
+*/
 
 
 INSERT INTO rule_evaluations
@@ -1437,35 +1538,9 @@ ON CONFLICT (
 DO NOTHING;
 
 
-INSERT INTO personalized_scores
-(
-    fk_user_id,
-    fk_product_version_id,
-    fk_analysis_result_id,
-    fk_scoring_model_id,
-    final_score,
-    compatibility_percentage,
-    risk_level,
-    recommendation_level,
-    summary
-)
-SELECT
-    ar.fk_user_id,
-    ar.fk_product_version_id,
-    ar.analysis_result_id,
-    ar.fk_scoring_model_id,
-    0,
-    0.00,
-    'low'::venus.risk_level_enum,
-    'acceptable'::venus.recommendation_level_enum,
-    'SEED TÉCNICO: valor inicial para validar o pipeline; não é avaliação real.'
-FROM analysis_results ar
-ON CONFLICT (
-    fk_user_id,
-    fk_product_version_id,
-    fk_scoring_model_id
-)
-DO NOTHING;
+/*
+  Scores personalizados são criados junto com uma classificação real da API.
+*/
 
 
 INSERT INTO recommendations

@@ -604,6 +604,30 @@ def validate_db(conn) -> dict:
         checks['users'] = int(cur.fetchone()[0])
         cur.execute("SELECT COUNT(*) FROM venus.ingredients")
         checks['ingredients'] = int(cur.fetchone()[0])
+        cur.execute("""
+            SELECT COUNT(*)
+            FROM venus.ingredients
+            WHERE scientific_confidence IS NULL
+               OR scientific_confidence NOT BETWEEN 1 AND 100
+        """)
+        checks['invalid_ingredient_confidence'] = int(cur.fetchone()[0])
+        if checks['invalid_ingredient_confidence']:
+            raise RuntimeError('Existe ingrediente com scientific_confidence fora de 1..100.')
+        cur.execute("""
+            SELECT COUNT(*)
+            FROM (
+                SELECT confidence_score FROM venus.product_scores
+                UNION ALL
+                SELECT confidence_score FROM venus.analysis_results
+                UNION ALL
+                SELECT confidence_score FROM venus.recommendations
+            ) scores
+            WHERE confidence_score IS NULL
+               OR confidence_score NOT BETWEEN 1 AND 100
+        """)
+        checks['invalid_classification_confidence'] = int(cur.fetchone()[0])
+        if checks['invalid_classification_confidence']:
+            raise RuntimeError('Existe resultado de classificação com confidence_score fora de 1..100.')
         cur.execute("SELECT COUNT(*) FROM venus.data_catalog")
         checks['data_catalog_rows'] = int(cur.fetchone()[0])
         cur.execute("SELECT COUNT(*) FROM venus.data_catalog_rules")

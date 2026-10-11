@@ -514,7 +514,9 @@ CREATE TABLE ingredients (
     comedogenicity_score SMALLINT NOT NULL DEFAULT 0,
     environmental_risk_level SMALLINT NOT NULL DEFAULT 0,
     safety_summary TEXT NOT NULL DEFAULT '',
-    scientific_confidence SMALLINT NOT NULL DEFAULT 0,
+    scientific_confidence SMALLINT NOT NULL DEFAULT 1
+        CONSTRAINT ck_ingredients_scientific_confidence_range
+        CHECK (scientific_confidence BETWEEN 1 AND 100),
     source_type source_type_enum NOT NULL DEFAULT 'import',
     source_reference TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -631,7 +633,9 @@ CREATE TABLE product_scores (
     ethical_score INTEGER NOT NULL DEFAULT 0,
     performance_score INTEGER NOT NULL DEFAULT 0,
     transparency_score INTEGER,
-    confidence_score SMALLINT,
+    confidence_score SMALLINT NOT NULL DEFAULT 1
+        CONSTRAINT ck_product_scores_confidence_score_range
+        CHECK (confidence_score BETWEEN 1 AND 100),
     calculated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -649,7 +653,9 @@ CREATE TABLE analysis_results (
     ethical_score INTEGER NOT NULL DEFAULT 0,
     performance_score INTEGER NOT NULL DEFAULT 0,
     transparency_score INTEGER DEFAULT 0,
-    confidence_score SMALLINT DEFAULT 0,
+    confidence_score SMALLINT NOT NULL DEFAULT 1
+        CONSTRAINT ck_analysis_results_confidence_score_range
+        CHECK (confidence_score BETWEEN 1 AND 100),
     processing_time_ms INTEGER NOT NULL DEFAULT 0,
     status analysis_status_enum NOT NULL DEFAULT 'processing',
     summary TEXT NOT NULL DEFAULT '',
@@ -694,7 +700,9 @@ CREATE TABLE recommendations (
     fk_product_version_id BIGINT NOT NULL REFERENCES product_versions(product_version_id) ON DELETE CASCADE,
     fk_analysis_result_id BIGINT NOT NULL REFERENCES analysis_results(analysis_result_id) ON DELETE CASCADE,
     recommendation_type recommendation_type_enum NOT NULL DEFAULT 'recommended',
-    confidence_score SMALLINT NOT NULL DEFAULT 0,
+    confidence_score SMALLINT NOT NULL DEFAULT 1
+        CONSTRAINT ck_recommendations_confidence_score_range
+        CHECK (confidence_score BETWEEN 1 AND 100),
     ranking_position INTEGER NOT NULL DEFAULT 0,
     reason TEXT NOT NULL DEFAULT '',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -1207,6 +1215,123 @@ BEGIN
 END;
 $$;
 
+CREATE OR REPLACE FUNCTION venus.fn_calculate_ingredient_confidence(
+    p_ingredient_id BIGINT
+)
+RETURNS SMALLINT
+LANGUAGE sql
+STABLE
+AS $function$
+WITH evidence AS (
+    SELECT
+        i.source_type::TEXT AS source_type,
+        LOWER(COALESCE(i.source_reference, '')) AS source_reference,
+        COALESCE(MAX(CASE e.evidence_level::TEXT
+            WHEN 'very_high' THEN 15
+            WHEN 'high' THEN 10
+            WHEN 'medium' THEN 5
+            WHEN 'low' THEN 2
+            ELSE 0
+        END), 0) AS evidence_points,
+        COALESCE(MAX(CASE e.review_status::TEXT
+            WHEN 'validated' THEN 10
+            WHEN 'under_review' THEN 5
+            WHEN 'deprecated' THEN -20
+            ELSE 0
+        END), 0) AS review_points
+    FROM venus.ingredients i
+    LEFT JOIN venus.ingredient_effects e
+      ON e.fk_ingredient_id = i.ingredient_id
+    WHERE i.ingredient_id = p_ingredient_id
+    GROUP BY i.source_type, i.source_reference
+)
+SELECT LEAST(100, GREATEST(1,
+    CASE
+        WHEN source_type = 'import' AND source_reference <> '' THEN 45
+        WHEN source_type = 'import' THEN 10
+        WHEN source_type = 'official_site' THEN 60
+        WHEN source_type = 'admin' THEN 40
+        WHEN source_type = 'ocr' THEN 25
+        WHEN source_type = 'system' THEN 20
+        WHEN source_type = 'user_submission' THEN 10
+        ELSE 1
+    END
+    + CASE WHEN source_reference LIKE '%pubchem%' THEN 15 ELSE 0 END
+    + CASE WHEN source_reference LIKE '%anvisa%' THEN 10 ELSE 0 END
+    + CASE WHEN source_reference LIKE '%eur-lex%' THEN 10 ELSE 0 END
+    + evidence_points
+    + review_points
+))::SMALLINT
+FROM evidence;
+$function$;
+
+CREATE OR REPLACE FUNCTION venus.fn_calculate_product_confidence(
+    p_product_version_id BIGINT
+)
+RETURNS SMALLINT
+LANGUAGE sql
+STABLE
+AS $function$
+SELECT GREATEST(1, LEAST(100,
+    COALESCE(ROUND(AVG(i.scientific_confidence))::INTEGER, 1)
+))::SMALLINT
+FROM venus.product_ingredients pi
+JOIN venus.ingredients i
+  ON i.ingredient_id = pi.fk_ingredient_id
+WHERE pi.fk_product_version_id = p_product_version_id;
+$function$;
+
+CREATE OR REPLACE FUNCTION venus.fn_set_derived_confidence_score()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $function$
+BEGIN
+    NEW.confidence_score := venus.fn_calculate_product_confidence(
+        NEW.fk_product_version_id
+    );
+    RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION venus.fn_set_recommendation_confidence_score()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $function$
+BEGIN
+    NEW.confidence_score := COALESCE(
+        (SELECT ar.confidence_score
+           FROM venus.analysis_results ar
+          WHERE ar.analysis_result_id = NEW.fk_analysis_result_id),
+        venus.fn_calculate_product_confidence(NEW.fk_product_version_id),
+        1
+    );
+    RETURN NEW;
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION venus.fn_refresh_confidence_after_ingredient_update()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $function$
+BEGIN
+    UPDATE venus.product_scores ps
+       SET confidence_score = venus.fn_calculate_product_confidence(pi.fk_product_version_id),
+           updated_at = NOW()
+      FROM venus.product_ingredients pi
+     WHERE pi.fk_ingredient_id = NEW.ingredient_id
+       AND ps.fk_product_version_id = pi.fk_product_version_id;
+
+    UPDATE venus.analysis_results ar
+       SET confidence_score = venus.fn_calculate_product_confidence(pi.fk_product_version_id),
+           updated_at = NOW()
+      FROM venus.product_ingredients pi
+     WHERE pi.fk_ingredient_id = NEW.ingredient_id
+       AND ar.fk_product_version_id = pi.fk_product_version_id;
+
+    RETURN NEW;
+END;
+$function$;
+
 DROP TRIGGER IF EXISTS trg_log_user_login_activity ON venus.users;
 CREATE TRIGGER trg_log_user_login_activity AFTER UPDATE OF last_login ON venus.users
 FOR EACH ROW WHEN (NEW.last_login IS DISTINCT FROM OLD.last_login AND NEW.last_login IS NOT NULL)
@@ -1275,6 +1400,31 @@ END;
 $proc$;
 
 CALL venus.sp_sync_standard_triggers();
+
+DROP TRIGGER IF EXISTS trg_derive_product_scores_confidence ON venus.product_scores;
+CREATE TRIGGER trg_derive_product_scores_confidence
+BEFORE INSERT OR UPDATE ON venus.product_scores
+FOR EACH ROW
+EXECUTE FUNCTION venus.fn_set_derived_confidence_score();
+
+DROP TRIGGER IF EXISTS trg_derive_analysis_results_confidence ON venus.analysis_results;
+CREATE TRIGGER trg_derive_analysis_results_confidence
+BEFORE INSERT OR UPDATE ON venus.analysis_results
+FOR EACH ROW
+EXECUTE FUNCTION venus.fn_set_derived_confidence_score();
+
+DROP TRIGGER IF EXISTS trg_derive_recommendations_confidence ON venus.recommendations;
+CREATE TRIGGER trg_derive_recommendations_confidence
+BEFORE INSERT OR UPDATE ON venus.recommendations
+FOR EACH ROW
+EXECUTE FUNCTION venus.fn_set_recommendation_confidence_score();
+
+DROP TRIGGER IF EXISTS trg_refresh_confidence_after_ingredient_update ON venus.ingredients;
+CREATE TRIGGER trg_refresh_confidence_after_ingredient_update
+AFTER UPDATE OF scientific_confidence ON venus.ingredients
+FOR EACH ROW
+WHEN (OLD.scientific_confidence IS DISTINCT FROM NEW.scientific_confidence)
+EXECUTE FUNCTION venus.fn_refresh_confidence_after_ingredient_update();
 
 DROP TRIGGER IF EXISTS trg_activity_recommendations ON venus.recommendations;
 DROP TRIGGER IF EXISTS trg_activity_personalized_scores ON venus.personalized_scores;
