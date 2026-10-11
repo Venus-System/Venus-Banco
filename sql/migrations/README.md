@@ -280,3 +280,24 @@ de fragrância, incluindo óleos essenciais e matérias-primas botânicas. Extra
 Use `venus.v_ingredient_category_links` quando a consulta precisar enxergar
 categorias primárias e secundárias. O executor validado para os dois ambientes
 é `ops/apply_20261010_003.py`.
+
+## Fragrância canônica e fila de evidência — 2026-10-11
+
+`20261011_001_fragrance_canonical_confidence_evidence.sql` move os registros
+`PARFUM` (8104) e `PARFUM / FRAGRANCE` (8202) para `Agente Perfumante`, preenche
+`common_name`/`function_summary` e registra aliases cosméticos em 8104. Os dois
+IDs são preservados para compatibilidade histórica.
+
+A view `venus.v_product_fragrance_flags` expõe `contains_fragrance`,
+`warning_text` e os IDs envolvidos para o backend/mobile; o aviso é derivado
+da categoria canônica, não de uma lista fixa de IDs. A função
+`venus.fn_product_contains_fragrance` fornece o mesmo contrato para consultas
+por versão.
+
+A coluna `ingredients.scientific_confidence_state` separa `default` (fallback
+1), `derived` e `curated`. A view `venus.v_ingredient_evaluation_status` também
+separa avaliações indiretas `v1/low` de avaliações com evidência `medium+`.
+Os ingredientes usados com fallback ou proxy entram em
+`venus.ingredient_evidence_queue`; a prioridade 1 corresponde aos 185
+ingredientes atuais com confidence padrão 1. A fila não altera os assessments
+atuais nem executa a API de classificação.
