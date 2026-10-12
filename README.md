@@ -49,6 +49,11 @@ O pipeline usa `.env` como configuração padrão. A parte do banco Venus execut
 - `ops/generate_database_model.py`: extrator somente leitura do catálogo PostgreSQL para documentação do modelo implantado.
 - `docs/database-logical-model.md`: inventário completo de tabelas, campos, constraints, relacionamentos, enums e views.
 - `docs/database-logical-model.svg`: imagem zoomável do modelo lógico físico.
+- `docs/DECISOES_SCORE_INGREDIENTES.md`: metodologia, eixos, fontes, proxies e regras de evidência dos ingredientes.
+- `docs/DECISOES_SCORE_PRODUTOS_E_CLASSIFICACAO.md`: responsabilidades do banco e da API, prontidão e reclassificação.
+- `docs/DECISOES_CONFIANCA_EVIDENCIA.md`: diferença entre confidence, avaliação direta, proxy e estado semântico.
+- `docs/RUNBOOK_SCORE_EVIDENCIA.md`: consultas e comandos operacionais para cargas e auditorias futuras.
+- `docs/HISTORICO_DECISOES_SCORE_E_PUSH.md`: histórico das decisões, validações, commit e push.
 - `rpa_migrate.py`: extrai do legado externo e carrega `venus.*`.
 - `cloudinary_service.py`: geração de assinaturas de upload e operações backend-only do Cloudinary; o `api_secret` nunca é enviado a web/mobile.
 
