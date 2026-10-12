@@ -96,8 +96,8 @@ CREATE TABLE "venus"."brands" (
     "name" text NOT NULL,
     "country" text,
     "website" text,
-    "has_cruelty_free_claim" boolean DEFAULT false NOT NULL,
-    "has_vegan_claim" boolean DEFAULT false NOT NULL,
+    "has_cruelty_free_claim" boolean,
+    "has_vegan_claim" boolean,
     "is_brazilian" boolean DEFAULT false NOT NULL,
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL

@@ -207,8 +207,8 @@ Relação explícita entre alergias e ingredientes INCI para compatibilidade de 
 | 2 | `name` | `text` | não | `—` | UQ | — |
 | 3 | `country` | `text` | sim | `—` | UQ | — |
 | 4 | `website` | `text` | sim | `—` | — | — |
-| 5 | `has_cruelty_free_claim` | `boolean` | não | `false` | — | — |
-| 6 | `has_vegan_claim` | `boolean` | não | `false` | — | — |
+| 5 | `has_cruelty_free_claim` | `boolean` | sim | `NULL` | — | `TRUE/FALSE somente com evidência elegível; NULL = desconhecido` |
+| 6 | `has_vegan_claim` | `boolean` | sim | `NULL` | — | `TRUE/FALSE somente com evidência elegível; NULL = desconhecido` |
 | 7 | `is_brazilian` | `boolean` | não | `false` | — | — |
 | 8 | `created_at` | `timestamp with time zone` | não | `now()` | — | — |
 | 9 | `updated_at` | `timestamp with time zone` | não | `now()` | — | — |

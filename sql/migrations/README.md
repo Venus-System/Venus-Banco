@@ -309,3 +309,20 @@ schema `venus`, usado pelo `currentSchema` da API. O `ProductRepository` e o
 `IngredientRepository` podem normalizar os dois lados da comparação com
 `venus.unaccent(lower(...))`, permitindo que `locao` encontre `Loção`. A
 migration não altera os dados nem executa a classificação.
+
+## Claims éticos desconhecidos — 2026-10-12
+
+`20261012_006_brand_claim_unknown_state.sql` corrige a semântica dos campos
+`brands.has_vegan_claim` e `brands.has_cruelty_free_claim`. A ausência de fonte
+passa a ser `NULL`/`unknown`, enquanto `TRUE` e `FALSE` só são derivados de
+evidência elegível (`high` ou `medium`) registrada em
+`venus.brand_claim_evidence`.
+
+A migration adiciona checks para exigir URL, título e justificativa nas
+evidências, sincroniza automaticamente os flags quando uma evidência é criada,
+alterada ou removida e expõe `venus.v_brand_claim_status` para o backend
+identificar `verified`, `explicit_negative`, `conflict` e `unknown`.
+
+Ela não executa a classificação nem recalcula `product_scores`. Use
+`ops/apply_20261012_006.py` para aplicar a migration e imprimir as contagens
+de validação.
