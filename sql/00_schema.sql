@@ -514,9 +514,12 @@ CREATE TABLE ingredients (
     comedogenicity_score SMALLINT NOT NULL DEFAULT 0,
     environmental_risk_level SMALLINT NOT NULL DEFAULT 0,
     safety_summary TEXT NOT NULL DEFAULT '',
-    scientific_confidence SMALLINT NOT NULL DEFAULT 1
+    scientific_confidence SMALLINT NOT NULL DEFAULT 0
         CONSTRAINT ck_ingredients_scientific_confidence_range
-        CHECK (scientific_confidence BETWEEN 1 AND 100),
+        CHECK (scientific_confidence BETWEEN 0 AND 100),
+    scientific_confidence_state TEXT NOT NULL DEFAULT 'default'
+        CONSTRAINT ck_ingredients_scientific_confidence_state
+        CHECK (scientific_confidence_state IN ('default', 'derived', 'curated')),
     source_type source_type_enum NOT NULL DEFAULT 'import',
     source_reference TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
