@@ -301,3 +301,11 @@ Os ingredientes usados com fallback ou proxy entram em
 `venus.ingredient_evidence_queue`; a prioridade 1 corresponde aos 185
 ingredientes atuais com confidence padrão 1. A fila não altera os assessments
 atuais nem executa a API de classificação.
+
+## Busca sem acento no CRUD — 2026-10-12
+
+`20261012_005_unaccent_search.sql` instala a extensão PostgreSQL `unaccent` no
+schema `venus`, usado pelo `currentSchema` da API. O `ProductRepository` e o
+`IngredientRepository` podem normalizar os dois lados da comparação com
+`venus.unaccent(lower(...))`, permitindo que `locao` encontre `Loção`. A
+migration não altera os dados nem executa a classificação.

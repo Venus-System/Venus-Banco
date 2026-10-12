@@ -1,0 +1,787 @@
+%% Generated from PostgreSQL metadata; physical tables only.
+erDiagram
+    venus__admin_users {
+        BIGINT admin_user_id PK
+        TEXT name
+        TEXT email UK
+        VENUS_ADMIN_ROLE_ENUM role
+        BOOLEAN is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        TEXT password_hash
+    }
+    venus__allergies {
+        BIGINT allergy_id PK
+        TEXT allergy_name UK
+        VENUS_ALLERGY_TYPE_ENUM allergy_type
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_catalog_visible
+    }
+    venus__allergy_ingredients {
+        BIGINT allergy_ingredient_id PK
+        BIGINT fk_allergy_id UK FK
+        BIGINT fk_ingredient_id UK FK
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__analysis_results {
+        BIGINT analysis_result_id PK
+        BIGINT fk_user_id FK
+        BIGINT fk_product_version_id FK
+        BIGINT fk_scoring_model_id FK
+        INTEGER overall_score
+        INTEGER health_score
+        INTEGER environmental_score
+        INTEGER ethical_score
+        INTEGER performance_score
+        INTEGER transparency_score
+        SMALLINT confidence_score
+        INTEGER processing_time_ms
+        VENUS_ANALYSIS_STATUS_ENUM status
+        TEXT summary
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__brands {
+        BIGINT brand_id PK
+        TEXT name UK
+        TEXT country UK
+        TEXT website
+        BOOLEAN has_cruelty_free_claim
+        BOOLEAN has_vegan_claim
+        BOOLEAN is_brazilian
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__claims {
+        BIGINT claim_id PK
+        TEXT name UK
+        TEXT description
+        VENUS_CLAIM_TYPE_ENUM claim_type
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__compatibility_rules {
+        BIGINT compatibility_rule_id PK
+        BIGINT fk_ingredient_effect_id UK FK
+        BIGINT fk_scoring_model_id UK FK
+        VENUS_EFFECT_TYPE_ENUM effect_type
+        INTEGER score_delta
+        NUMERIC_6_2_ weight
+        INTEGER priority
+        BOOLEAN has_concentration_factor
+        BOOLEAN is_enabled
+        VENUS_EVIDENCE_LEVEL_ENUM evidence_level
+        TEXT reason
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_block
+        BOOLEAN is_alert
+    }
+    venus__data_catalog {
+        BIGINT catalog_id PK
+        TEXT object_type UK
+        TEXT table_name UK
+        TEXT column_name UK
+        INTEGER ordinal_position
+        TEXT data_type
+        TEXT udt_name
+        BOOLEAN is_nullable
+        TEXT default_value
+        BOOLEAN is_primary_key
+        BOOLEAN is_foreign_key
+        TEXT referenced_table_name
+        TEXT referenced_column_name
+        TEXT table_description
+        TEXT column_description
+        TEXT business_rule
+        TEXT access_level
+        TEXT access_rule
+        TEXT data_classification
+        TEXT sensitivity_reason
+        TEXT retention_policy
+        TEXT source_of_definition
+        TIMESTAMP reviewed_at
+        BOOLEAN is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__data_catalog_rules {
+        BIGINT rule_id PK
+        TEXT object_type UK
+        TEXT table_name UK
+        TEXT column_name UK
+        TEXT table_description
+        TEXT column_description
+        TEXT business_rule
+        TEXT access_level
+        TEXT access_rule
+        TEXT data_classification
+        TEXT sensitivity_reason
+        TEXT retention_policy
+        TEXT notes
+        BOOLEAN is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__favorites {
+        BIGINT favorite_id PK
+        BIGINT fk_user_id UK FK
+        BIGINT fk_product_id UK FK
+        TIMESTAMP created_at
+    }
+    venus__google_oauth_tokens {
+        BIGINT google_oauth_token_id PK
+        BIGINT fk_user_id UK FK
+        BYTEA encrypted_refresh_token
+        TEXT scope
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_aliases {
+        BIGINT ingredient_alias_id PK
+        BIGINT fk_ingredient_id UK FK
+        TEXT alias_name UK
+        TEXT alias_language UK
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_categories {
+        BIGINT ingredient_category_id PK
+        BIGINT parent_ingredient_category_id FK
+        TEXT name UK
+        TEXT description
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_category_assignments {
+        BIGINT ingredient_category_assignment_id PK
+        BIGINT fk_ingredient_id UK FK
+        BIGINT fk_ingredient_category_id UK FK
+        TEXT assignment_role
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_effects {
+        BIGINT ingredient_effect_id PK
+        BIGINT fk_ingredient_id UK FK
+        BIGINT fk_profile_tag_id UK FK
+        VENUS_EFFECT_CATEGORY_ENUM effect_category UK
+        TEXT effect_name UK
+        TEXT effect_description
+        VENUS_EFFECT_STRENGTH_ENUM effect_strength
+        VENUS_EVIDENCE_LEVEL_ENUM evidence_level
+        VENUS_REVIEW_STATUS_ENUM review_status
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_properties {
+        BIGINT ingredient_property_id PK
+        BIGINT fk_ingredient_id UK FK
+        TEXT property_name UK
+        TEXT property_value
+        TEXT unit UK
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_regulations {
+        BIGINT ingredient_regulation_id PK
+        BIGINT fk_ingredient_id UK FK
+        BIGINT fk_regulation_id UK FK
+        VENUS_RESTRICTION_TYPE_ENUM restriction_type
+        NUMERIC_10_4_ max_concentration_value
+        TEXT unit
+        TEXT notes
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_resolution_keys {
+        TEXT normalized_key PK
+        BIGINT fk_ingredient_id PK FK
+        SMALLINT resolution_priority
+    }
+    venus__ingredient_risk_assessments {
+        BIGINT ingredient_risk_assessment_id PK
+        BIGINT fk_ingredient_id UK FK
+        TEXT dimension UK
+        SMALLINT score
+        TEXT assessment_status
+        TEXT source_type
+        TEXT source_reference
+        TEXT assessment_version UK
+        TIMESTAMP assessed_at
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        VENUS_EVIDENCE_LEVEL_ENUM evidence_level
+        TEXT rationale
+        TEXT assessment_scope
+    }
+    venus__ingredient_risk_methodologies {
+        TEXT methodology_version PK
+        TEXT name
+        TEXT status
+        TEXT score_semantics
+        TEXT unknown_policy
+        JSONB source_hierarchy
+        DATE effective_from
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_risk_methodology_dimensions {
+        TEXT methodology_version PK FK
+        TEXT dimension PK
+        TEXT score_direction
+        TEXT definition
+        JSONB required_evidence
+        JSONB anchors
+    }
+    venus__ingredients {
+        BIGINT ingredient_id PK
+        BIGINT fk_ingredient_category_id FK
+        TEXT inci_name UK
+        TEXT common_name
+        TEXT function_summary
+        TEXT description
+        SMALLINT biodegradability_level
+        SMALLINT irritation_risk_level
+        SMALLINT comedogenicity_score
+        SMALLINT environmental_risk_level
+        TEXT safety_summary
+        SMALLINT scientific_confidence
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__media_assets {
+        BIGINT media_asset_id PK
+        BIGINT fk_user_id FK
+        BIGINT fk_product_version_id FK
+        TEXT purpose
+        TEXT provider UK
+        TEXT resource_type
+        TEXT delivery_type
+        TEXT public_id UK
+        TEXT asset_id
+        BIGINT version
+        TEXT secure_url
+        TEXT format
+        INTEGER width
+        INTEGER height
+        BIGINT bytes
+        TEXT folder
+        TEXT original_filename
+        TEXT alt_text
+        INTEGER sort_order
+        TEXT status
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BIGINT fk_user_list_id FK
+    }
+    venus__packaging {
+        BIGINT packaging_id PK
+        BIGINT fk_product_version_id UK FK
+        VENUS_PACKAGING_MATERIAL_ENUM material
+        TEXT material_detail
+        VENUS_PACKAGING_FORMAT_ENUM packaging_format
+        BOOLEAN is_recyclable
+        BOOLEAN is_refillable
+        BOOLEAN is_biodegradable
+        NUMERIC_5_2_ recycled_content_percentage
+        SMALLINT confidence_score
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        BOOLEAN was_manual_verified
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__personalized_scores {
+        BIGINT personalized_score_id PK
+        BIGINT fk_user_id UK FK
+        BIGINT fk_product_version_id UK FK
+        BIGINT fk_analysis_result_id FK
+        BIGINT fk_scoring_model_id UK FK
+        INTEGER final_score
+        NUMERIC_5_2_ compatibility_percentage
+        VENUS_RISK_LEVEL_ENUM risk_level
+        VENUS_RECOMMENDATION_LEVEL_ENUM recommendation_level
+        TEXT summary
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__product_categories {
+        BIGINT product_category_id PK
+        TEXT name UK
+        TEXT description
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__product_claims {
+        BIGINT product_claim_id PK
+        BIGINT fk_product_version_id UK FK
+        BIGINT fk_claim_id UK FK
+        BOOLEAN was_verified
+        TEXT verified_by
+        TIMESTAMP verified_at
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__product_composition_receipts {
+        BIGINT product_composition_receipt_id PK UK
+        BIGINT fk_product_version_id UK FK
+        TEXT source_type
+        TEXT source_reference
+        TEXT raw_ingredients_text
+        TEXT formula_hash
+        TEXT validation_status
+        INTEGER expected_count
+        INTEGER resolved_count
+        INTEGER unresolved_count
+        BOOLEAN is_current
+        TIMESTAMP validated_at
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__product_dimension_assessments {
+        BIGINT product_dimension_assessment_id PK
+        BIGINT fk_product_version_id UK FK
+        TEXT dimension UK
+        TEXT assessment_status
+        TEXT source_type
+        TEXT source_reference
+        TEXT assessment_version UK
+        TIMESTAMP assessed_at
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__product_ingredient_resolution_issues {
+        BIGINT product_ingredient_resolution_issue_id PK
+        BIGINT fk_product_version_id UK FK
+        INTEGER token_position UK
+        TEXT raw_token
+        TEXT issue_type
+        TEXT source_reference
+        TIMESTAMP created_at
+    }
+    venus__product_ingredients {
+        BIGINT product_ingredient_id PK
+        BIGINT fk_product_version_id UK FK
+        BIGINT fk_ingredient_id UK FK
+        INTEGER position UK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__product_labels {
+        BIGINT product_label_id PK
+        BIGINT fk_product_version_id UK FK
+        TEXT normalized_text
+        TEXT language
+        VENUS_SOURCE_TYPE_ENUM source_type
+        TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__product_score_history {
+        BIGINT product_score_history_id PK
+        BIGINT source_product_score_id
+        BIGINT fk_product_version_id
+        BIGINT fk_scoring_model_id
+        INTEGER overall_score
+        INTEGER health_score
+        INTEGER environmental_score
+        INTEGER ethical_score
+        INTEGER performance_score
+        INTEGER transparency_score
+        SMALLINT confidence_score
+        TIMESTAMP calculated_at
+        TIMESTAMP invalidated_at
+        TEXT invalidation_reason
+    }
+    venus__product_scores {
+        BIGINT product_score_id PK
+        BIGINT fk_product_version_id UK FK
+        BIGINT fk_scoring_model_id UK FK
+        INTEGER overall_score
+        INTEGER health_score
+        INTEGER environmental_score
+        INTEGER ethical_score
+        INTEGER performance_score
+        INTEGER transparency_score
+        SMALLINT confidence_score
+        TIMESTAMP calculated_at
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__product_versions {
+        BIGINT product_version_id PK
+        BIGINT fk_product_id UK FK
+        TEXT version_name
+        TEXT display_name
+        VENUS_VERSION_STATUS_ENUM status
+        BOOLEAN is_current
+        TEXT formula_signature UK
+        VENUS_SOURCE_TYPE_ENUM detected_by
+        DATE effective_from
+        DATE effective_to
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__products {
+        BIGINT product_id PK
+        BIGINT fk_brand_id FK
+        BIGINT fk_product_category_id FK
+        TEXT name
+        TEXT description
+        TEXT slug UK
+        BOOLEAN is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__profile_tags {
+        BIGINT profile_tag_id PK
+        TEXT name UK
+        TEXT description
+        TEXT slug UK
+        VENUS_PROFILE_TAG_CATEGORY_ENUM category
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__recommendations {
+        BIGINT recommendation_id PK
+        BIGINT fk_user_id UK FK
+        BIGINT fk_profile_tag_id UK FK
+        BIGINT fk_product_version_id UK FK
+        BIGINT fk_analysis_result_id UK FK
+        VENUS_RECOMMENDATION_TYPE_ENUM recommendation_type
+        SMALLINT confidence_score
+        INTEGER ranking_position
+        TEXT reason
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__regulations {
+        BIGINT regulation_id PK
+        TEXT title UK
+        TEXT country UK
+        TEXT agency UK
+        TEXT document_url
+        VENUS_REGULATION_STATUS_ENUM status
+        DATE effective_date
+        TEXT summary
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__reports {
+        BIGINT report_id PK
+        BIGINT fk_user_id FK
+        BIGINT fk_admin_user_id FK
+        VENUS_REPORT_TARGET_TYPE_ENUM target_type
+        BIGINT target_id
+        TEXT reason
+        VENUS_REPORT_STATUS_ENUM status
+        TIMESTAMP handled_at
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__review_votes {
+        BIGINT review_vote_id PK
+        BIGINT fk_review_id UK FK
+        BIGINT fk_user_id UK FK
+        VENUS_VOTE_TYPE_ENUM vote_type
+        TIMESTAMP created_at
+    }
+    venus__reviews {
+        BIGINT review_id PK
+        BIGINT fk_user_id UK FK
+        BIGINT fk_product_version_id UK FK
+        NUMERIC_2_1_ rating
+        TEXT title
+        TEXT comment
+        BOOLEAN verified_use
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__rule_evaluations {
+        BIGINT rule_evaluation_id PK
+        BIGINT fk_analysis_result_id UK FK
+        BIGINT fk_compatibility_rule_id UK FK
+        BIGINT fk_ingredient_id UK FK
+        BIGINT fk_profile_tag_id UK FK
+        BOOLEAN was_matched
+        NUMERIC_10_2_ score_delta
+        NUMERIC_10_2_ final_delta
+        TEXT explanation
+        TIMESTAMP created_at
+    }
+    venus__score_categories {
+        BIGINT score_category_id PK
+        TEXT name UK
+        TEXT description
+        NUMERIC_6_2_ default_weight
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__scoring_model_categories {
+        BIGINT scoring_model_category_id PK
+        BIGINT fk_scoring_model_id UK FK
+        BIGINT fk_score_category_id UK FK
+        NUMERIC_6_2_ weight
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__scoring_models {
+        BIGINT scoring_model_id PK
+        TEXT name UK
+        TEXT version UK
+        TEXT description
+        BOOLEAN is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__user_access_events {
+        BIGINT access_event_id PK
+        BIGINT fk_user_id FK
+        TEXT access_type
+        TIMESTAMP accessed_at
+        DATE activity_date
+        TEXT application_name
+        INET client_ip
+        JSONB metadata
+    }
+    venus__user_allergies {
+        BIGINT user_allergy_id PK
+        BIGINT fk_user_id UK FK
+        BIGINT fk_allergy_id UK FK
+        VENUS_RISK_LEVEL_ENUM severity
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__user_list_items {
+        BIGINT user_list_item_id PK
+        BIGINT fk_user_list_id UK FK
+        BIGINT fk_product_id UK FK
+        INTEGER position_order UK
+        TIMESTAMP created_at
+    }
+    venus__user_lists {
+        BIGINT user_list_id PK
+        BIGINT fk_user_id UK FK
+        TEXT name UK
+        VENUS_LIST_TYPE_ENUM list_type
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        TEXT description
+        TEXT cover_key
+    }
+    venus__user_preferences {
+        BIGINT user_preference_id PK
+        BIGINT fk_user_id UK FK
+        BOOLEAN prefer_cruelty_free
+        BOOLEAN prefer_vegan
+        BOOLEAN prefer_sustainable
+        BOOLEAN prefer_fragrance_free
+        BOOLEAN prefer_paraben_free
+        BOOLEAN prefer_sulfate_free
+        BOOLEAN prefer_silicone_free
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__user_profile_tags {
+        BIGINT user_profile_tag_id PK
+        BIGINT fk_user_id UK FK
+        BIGINT fk_profile_tag_id UK FK
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        BOOLEAN is_active
+    }
+    venus__user_profiles {
+        BIGINT user_profile_id PK
+        BIGINT fk_user_id UK FK
+        VENUS_SKIN_TYPE_ENUM skin_type
+        VENUS_SKIN_PHOTOTYPE_ENUM skin_phototype
+        BOOLEAN has_hyperpigmentation
+        BOOLEAN has_melasma
+        BOOLEAN has_rosacea
+        BOOLEAN has_eczema
+        VENUS_SCALP_TYPE_ENUM scalp_type
+        VENUS_SENSITIVITY_LEVEL_ENUM skin_sensitivity
+        BOOLEAN acne_prone
+        VENUS_AGE_RANGE_ENUM age_range
+        VENUS_GENDER_ENUM gender
+        BOOLEAN is_pregnant
+        BOOLEAN is_active
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        VENUS_HAIR_PATTERN_ENUM hair_pattern
+        BOOLEAN is_breastfeeding
+    }
+    venus__users {
+        BIGINT user_id PK
+        TEXT firebase_uid UK
+        TEXT name
+        VENUS_USER_STATUS_ENUM status
+        TIMESTAMP last_login
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+        TEXT email
+        TEXT password_hash
+    }
+    venus_audit__audit_logs {
+        BIGINT audit_id PK
+        TEXT schema_name
+        TEXT table_name
+        TEXT operation_type
+        JSONB old_data
+        JSONB new_data
+        TEXT changed_by
+        TIMESTAMP changed_at
+        TEXT application_name
+    }
+    venus_rpa__rpa_error {
+        BIGINT error_id PK
+        UUID batch_id FK
+        TEXT source_table
+        BIGINT legacy_id
+        TEXT error_type
+        TEXT error_message
+        JSONB payload
+        TIMESTAMP created_at
+    }
+    venus_rpa__rpa_run {
+        UUID batch_id PK
+        TIMESTAMP started_at
+        TIMESTAMP finished_at
+        TEXT status
+        TEXT source_database
+        TEXT source_products_query_hash
+        TEXT source_users_query_hash
+        INTEGER records_read
+        INTEGER records_transformed
+        INTEGER records_loaded
+        INTEGER records_failed
+        TEXT error_message
+    }
+    venus_rpa__rpa_stage_product {
+        UUID batch_id PK FK
+        BIGINT legacy_product_id PK
+        TEXT product_name
+        TEXT brand_name
+        TEXT category_name
+        TEXT ingredients_text
+        TEXT normalized_product_name
+        TEXT normalized_brand_name
+        TEXT normalized_category_name
+        TEXT validation_status
+        TEXT validation_message
+        BIGINT loaded_product_id FK
+    }
+    venus_rpa__rpa_stage_user {
+        UUID batch_id PK FK
+        BIGINT legacy_user_id PK
+        TEXT full_name
+        TEXT email
+        TEXT status_text
+        TEXT normalized_name
+        TEXT normalized_email
+        TEXT status_normalized
+        TEXT validation_status
+        TEXT validation_message
+        BIGINT loaded_user_id FK
+    }
+    venus_optimization__readme {
+        TEXT item PK
+        TEXT description
+    }
+
+    venus__allergies ||--|{ venus__allergy_ingredients : "allergy_ingredients_fk_allergy_id_fkey: fk_allergy_id -> allergy_id"
+    venus__ingredients ||--|{ venus__allergy_ingredients : "allergy_ingredients_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__product_versions ||--|{ venus__analysis_results : "analysis_results_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__scoring_models ||--|{ venus__analysis_results : "analysis_results_fk_scoring_model_id_fkey: fk_scoring_model_id -> scoring_model_id"
+    venus__users ||--|{ venus__analysis_results : "analysis_results_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__ingredient_effects ||--|{ venus__compatibility_rules : "compatibility_rules_fk_ingredient_effect_id_fkey: fk_ingredient_effect_id -> ingredient_effect_id"
+    venus__scoring_models ||--|{ venus__compatibility_rules : "compatibility_rules_fk_scoring_model_id_fkey: fk_scoring_model_id -> scoring_model_id"
+    venus__products ||--|{ venus__favorites : "favorites_fk_product_id_fkey: fk_product_id -> product_id"
+    venus__users ||--|{ venus__favorites : "favorites_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__users ||--o| venus__google_oauth_tokens : "google_oauth_tokens_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__ingredients ||--|{ venus__ingredient_aliases : "ingredient_aliases_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__ingredient_categories ||--o{ venus__ingredient_categories : "ingredient_categories_parent_ingredient_category_id_fkey: parent_ingredient_category_id -> ingredient_category_id"
+    venus__ingredient_categories ||--|{ venus__ingredient_category_assignments : "ingredient_category_assignments_fk_ingredient_category_id_fkey: fk_ingredient_category_id -> ingredient_category_id"
+    venus__ingredients ||--|{ venus__ingredient_category_assignments : "ingredient_category_assignments_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__ingredients ||--|{ venus__ingredient_effects : "ingredient_effects_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__profile_tags ||--|{ venus__ingredient_effects : "ingredient_effects_fk_profile_tag_id_fkey: fk_profile_tag_id -> profile_tag_id"
+    venus__ingredients ||--|{ venus__ingredient_properties : "ingredient_properties_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__ingredients ||--|{ venus__ingredient_regulations : "ingredient_regulations_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__regulations ||--|{ venus__ingredient_regulations : "ingredient_regulations_fk_regulation_id_fkey: fk_regulation_id -> regulation_id"
+    venus__ingredients ||--|{ venus__ingredient_resolution_keys : "ingredient_resolution_keys_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__ingredients ||--|{ venus__ingredient_risk_assessments : "ingredient_risk_assessments_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__ingredient_risk_methodologies ||--|{ venus__ingredient_risk_methodology_dimensions : "ingredient_risk_methodology_dimensions_methodology_version_fkey: methodology_version -> methodology_version"
+    venus__ingredient_categories ||--|{ venus__ingredients : "ingredients_fk_ingredient_category_id_fkey: fk_ingredient_category_id -> ingredient_category_id"
+    venus__product_versions ||--o{ venus__media_assets : "media_assets_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__users ||--o{ venus__media_assets : "media_assets_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__user_lists ||--o{ venus__media_assets : "media_assets_fk_user_list_id_fkey: fk_user_list_id -> user_list_id"
+    venus__product_versions ||--o| venus__packaging : "packaging_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__analysis_results ||--|{ venus__personalized_scores : "personalized_scores_fk_analysis_result_id_fkey: fk_analysis_result_id -> analysis_result_id"
+    venus__product_versions ||--|{ venus__personalized_scores : "personalized_scores_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__scoring_models ||--|{ venus__personalized_scores : "personalized_scores_fk_scoring_model_id_fkey: fk_scoring_model_id -> scoring_model_id"
+    venus__users ||--|{ venus__personalized_scores : "personalized_scores_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__claims ||--|{ venus__product_claims : "product_claims_fk_claim_id_fkey: fk_claim_id -> claim_id"
+    venus__product_versions ||--|{ venus__product_claims : "product_claims_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__product_versions ||--|{ venus__product_composition_receipts : "product_composition_receipts_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__product_versions ||--|{ venus__product_dimension_assessments : "product_dimension_assessments_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__product_versions ||--|{ venus__product_ingredient_resolution_issues : "product_ingredient_resolution_issues_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__ingredients ||--|{ venus__product_ingredients : "product_ingredients_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__product_versions ||--|{ venus__product_ingredients : "product_ingredients_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__product_versions ||--o| venus__product_labels : "product_labels_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__product_versions ||--|{ venus__product_scores : "product_scores_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__scoring_models ||--|{ venus__product_scores : "product_scores_fk_scoring_model_id_fkey: fk_scoring_model_id -> scoring_model_id"
+    venus__products ||--|{ venus__product_versions : "product_versions_fk_product_id_fkey: fk_product_id -> product_id"
+    venus__brands ||--|{ venus__products : "products_fk_brand_id_fkey: fk_brand_id -> brand_id"
+    venus__product_categories ||--|{ venus__products : "products_fk_product_category_id_fkey: fk_product_category_id -> product_category_id"
+    venus__analysis_results ||--|{ venus__recommendations : "recommendations_fk_analysis_result_id_fkey: fk_analysis_result_id -> analysis_result_id"
+    venus__product_versions ||--|{ venus__recommendations : "recommendations_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__profile_tags ||--|{ venus__recommendations : "recommendations_fk_profile_tag_id_fkey: fk_profile_tag_id -> profile_tag_id"
+    venus__users ||--|{ venus__recommendations : "recommendations_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__admin_users ||--o{ venus__reports : "reports_fk_admin_user_id_fkey: fk_admin_user_id -> admin_user_id"
+    venus__users ||--|{ venus__reports : "reports_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__reviews ||--|{ venus__review_votes : "review_votes_fk_review_id_fkey: fk_review_id -> review_id"
+    venus__users ||--|{ venus__review_votes : "review_votes_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__product_versions ||--|{ venus__reviews : "reviews_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
+    venus__users ||--|{ venus__reviews : "reviews_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__analysis_results ||--|{ venus__rule_evaluations : "rule_evaluations_fk_analysis_result_id_fkey: fk_analysis_result_id -> analysis_result_id"
+    venus__compatibility_rules ||--|{ venus__rule_evaluations : "rule_evaluations_fk_compatibility_rule_id_fkey: fk_compatibility_rule_id -> compatibility_rule_id"
+    venus__ingredients ||--|{ venus__rule_evaluations : "rule_evaluations_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__profile_tags ||--|{ venus__rule_evaluations : "rule_evaluations_fk_profile_tag_id_fkey: fk_profile_tag_id -> profile_tag_id"
+    venus__score_categories ||--|{ venus__scoring_model_categories : "scoring_model_categories_fk_score_category_id_fkey: fk_score_category_id -> score_category_id"
+    venus__scoring_models ||--|{ venus__scoring_model_categories : "scoring_model_categories_fk_scoring_model_id_fkey: fk_scoring_model_id -> scoring_model_id"
+    venus__users ||--|{ venus__user_access_events : "user_access_events_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__allergies ||--|{ venus__user_allergies : "user_allergies_fk_allergy_id_fkey: fk_allergy_id -> allergy_id"
+    venus__users ||--|{ venus__user_allergies : "user_allergies_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__products ||--|{ venus__user_list_items : "user_list_items_fk_product_id_fkey: fk_product_id -> product_id"
+    venus__user_lists ||--|{ venus__user_list_items : "user_list_items_fk_user_list_id_fkey: fk_user_list_id -> user_list_id"
+    venus__users ||--|{ venus__user_lists : "user_lists_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__users ||--o| venus__user_preferences : "user_preferences_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__profile_tags ||--|{ venus__user_profile_tags : "user_profile_tags_fk_profile_tag_id_fkey: fk_profile_tag_id -> profile_tag_id"
+    venus__users ||--|{ venus__user_profile_tags : "user_profile_tags_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__users ||--o| venus__user_profiles : "user_profiles_fk_user_id_fkey: fk_user_id -> user_id"
+    venus_rpa__rpa_run ||--|{ venus_rpa__rpa_error : "rpa_error_batch_id_fkey: batch_id -> batch_id"
+    venus_rpa__rpa_run ||--|{ venus_rpa__rpa_stage_product : "rpa_stage_product_batch_id_fkey: batch_id -> batch_id"
+    venus__products ||--o{ venus_rpa__rpa_stage_product : "rpa_stage_product_loaded_product_id_fkey: loaded_product_id -> product_id"
+    venus_rpa__rpa_run ||--|{ venus_rpa__rpa_stage_user : "rpa_stage_user_batch_id_fkey: batch_id -> batch_id"
+    venus__users ||--o{ venus_rpa__rpa_stage_user : "rpa_stage_user_loaded_user_id_fkey: loaded_user_id -> user_id"

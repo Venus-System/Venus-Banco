@@ -1,6 +1,10 @@
 CREATE SCHEMA IF NOT EXISTS venus;
 CREATE SCHEMA IF NOT EXISTS venus_audit;
 
+-- A API usa currentSchema=venus; manter a extensão no mesmo schema permite
+-- chamar venus.unaccent(...) sem depender de objetos em public.
+CREATE EXTENSION IF NOT EXISTS unaccent WITH SCHEMA venus;
+
 SET search_path TO venus, public;
 
 DO $$

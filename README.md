@@ -46,6 +46,9 @@ O pipeline usa `.env` como configuração padrão. A parte do banco Venus execut
 - `sql/40_data_catalog.sql`: catálogo técnico de tabelas, colunas e regras.
 - `sql/50_bi.sql`: views dimensionais + CTE/window analytics.
 - `sql/60_rpa.sql`: controle/staging do RPA no banco novo; não cria o legado.
+- `ops/generate_database_model.py`: extrator somente leitura do catálogo PostgreSQL para documentação do modelo implantado.
+- `docs/database-logical-model.md`: inventário completo de tabelas, campos, constraints, relacionamentos, enums e views.
+- `docs/database-logical-model.svg`: imagem zoomável do modelo lógico físico.
 - `rpa_migrate.py`: extrai do legado externo e carrega `venus.*`.
 - `cloudinary_service.py`: geração de assinaturas de upload e operações backend-only do Cloudinary; o `api_secret` nunca é enviado a web/mobile.
 
@@ -92,6 +95,11 @@ venus_postgres_pipeline_unificado/
 ├── data/
 │   ├── venus_v12_load.sql       # carga bruta de ingredientes (fonte para o pipeline)
 │   └── ETL_INGREDIENTES/        # documentação completa do ETL que originou a carga
+├── docs/
+│   ├── database-logical-model.md # snapshot completo do modelo implantado
+│   ├── database-logical-model.mmd # fonte Mermaid do diagrama
+│   ├── database-logical-model.sql # snapshot lógico SQL
+│   └── database-logical-model.svg # imagem zoomável do modelo
 ├── sql/                         # scripts SQL executados pelo pipeline, em ordem numérica
 └── ops/                         # scripts PowerShell de backup/restore
 ```
@@ -139,6 +147,8 @@ venus_postgres_pipeline_unificado/
 
 ## Documentação relacionada
 
+- `docs/database-logical-model.md` — snapshot do banco implantado, gerado diretamente dos metadados PostgreSQL.
+- `docs/database-logical-model.svg` — diagrama visual completo de tabelas, campos e FKs.
 - `AUDIT_DECISIONS.md` — o que foi mantido, removido e acrescentado na consolidação.
 - `MODEL_CARDINALIDADES.md` — chaves primárias, estrangeiras e cardinalidades do modelo.
 - `BACKUP_RECOVERY.md` — procedimento de backup e restauração.
