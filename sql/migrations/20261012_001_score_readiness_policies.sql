@@ -346,15 +346,20 @@ INSERT INTO venus.brand_claim_evidence (
     fk_brand_id, claim_type, claim_value, source_url, source_title,
     evidence_note, evidence_level
 )
-VALUES
-    (7, 'vegan', TRUE, 'https://www.lolacosmetics.com.br/pages/lola-lab', 'Lola Lab — site oficial', 'A marca declara que toda a linha é vegana e cruelty-free.', 'high'),
-    (7, 'cruelty_free', TRUE, 'https://www.lolacosmetics.com.br/pages/lola-lab', 'Lola Lab — site oficial', 'A marca declara que nada é testado em animais em nenhuma etapa.', 'high'),
-    (8, 'vegan', TRUE, 'https://www.skala.com.br/es/vegano/', 'Skala 100% Vegano — site oficial', 'A marca declara que toda a linha é 100% vegana e sem ingredientes de origem animal.', 'high'),
-    (8, 'cruelty_free', TRUE, 'https://www.skala.com.br/es/vegano/', 'Skala 100% Vegano — site oficial', 'A marca declara compromisso cruelty-free e ausência de testes em animais.', 'high'),
-    (9, 'cruelty_free', TRUE, 'https://www.natura.com.br/blog/sustentabilidade/contra-testes-em-animais', 'Natura — site oficial', 'A marca declara não realizar nem contratar testes em animais e informa certificação Cruelty Free International.', 'high'),
-    (24, 'vegan', TRUE, 'https://www.biossance.com/blog/certifications-and-awards/', 'Biossance Certifications and Awards — site oficial', 'A marca declara ser totalmente vegana.', 'high'),
-    (24, 'cruelty_free', TRUE, 'https://www.biossance.com/blog/certifications-and-awards/', 'Biossance Certifications and Awards — site oficial', 'A marca declara compromisso cruelty-free e que seus produtos não são testados em animais.', 'high'),
-    (25, 'cruelty_free', TRUE, 'https://www.thebodyshop.com/blogs/body-care/about-our-ingredients', 'The Body Shop — site oficial', 'A marca declara que ser cruelty-free é uma prioridade permanente.', 'medium')
+SELECT b.brand_id, x.claim_type, TRUE, x.source_url, x.source_title,
+       x.evidence_note, x.evidence_level
+  FROM (VALUES
+        ('lola cosmetics', 'vegan', 'https://www.lolacosmetics.com.br/pages/lola-lab', 'Lola Lab — site oficial', 'A marca declara que toda a linha é vegana e cruelty-free.', 'high'),
+        ('lola cosmetics', 'cruelty_free', 'https://www.lolacosmetics.com.br/pages/lola-lab', 'Lola Lab — site oficial', 'A marca declara que nada é testado em animais em nenhuma etapa.', 'high'),
+        ('skala', 'vegan', 'https://www.skala.com.br/es/vegano/', 'Skala 100% Vegano — site oficial', 'A marca declara que toda a linha é 100% vegana e sem ingredientes de origem animal.', 'high'),
+        ('skala', 'cruelty_free', 'https://www.skala.com.br/es/vegano/', 'Skala 100% Vegano — site oficial', 'A marca declara compromisso cruelty-free e ausência de testes em animais.', 'high'),
+        ('natura', 'cruelty_free', 'https://www.natura.com.br/blog/sustentabilidade/contra-testes-em-animais', 'Natura — site oficial', 'A marca declara não realizar nem contratar testes em animais e informa certificação Cruelty Free International.', 'high'),
+        ('biossance', 'vegan', 'https://www.biossance.com/blog/certifications-and-awards/', 'Biossance Certifications and Awards — site oficial', 'A marca declara ser totalmente vegana.', 'high'),
+        ('biossance', 'cruelty_free', 'https://www.biossance.com/blog/certifications-and-awards/', 'Biossance Certifications and Awards — site oficial', 'A marca declara compromisso cruelty-free e que seus produtos não são testados em animais.', 'high'),
+        ('the body shop', 'cruelty_free', 'https://www.thebodyshop.com/blogs/body-care/about-our-ingredients', 'The Body Shop — site oficial', 'A marca declara que ser cruelty-free é uma prioridade permanente.', 'medium')
+       ) AS x(brand_name, claim_type, source_url, source_title, evidence_note, evidence_level)
+  JOIN venus.brands b
+    ON LOWER(BTRIM(b.name)) = x.brand_name
 ON CONFLICT (fk_brand_id, claim_type, source_url) DO UPDATE SET
     claim_value = EXCLUDED.claim_value,
     source_title = EXCLUDED.source_title,
@@ -365,8 +370,7 @@ ON CONFLICT (fk_brand_id, claim_type, source_url) DO UPDATE SET
 
 UPDATE venus.brands b
    SET has_vegan_claim = TRUE
- WHERE b.brand_id IN (7, 8, 24)
-   AND EXISTS (
+ WHERE EXISTS (
        SELECT 1 FROM venus.brand_claim_evidence e
         WHERE e.fk_brand_id = b.brand_id
           AND e.claim_type = 'vegan'
@@ -376,8 +380,7 @@ UPDATE venus.brands b
 
 UPDATE venus.brands b
    SET has_cruelty_free_claim = TRUE
- WHERE b.brand_id IN (7, 8, 9, 24, 25)
-   AND EXISTS (
+ WHERE EXISTS (
        SELECT 1 FROM venus.brand_claim_evidence e
         WHERE e.fk_brand_id = b.brand_id
           AND e.claim_type = 'cruelty_free'

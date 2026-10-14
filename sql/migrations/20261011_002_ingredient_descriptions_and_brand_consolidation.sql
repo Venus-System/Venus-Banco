@@ -139,7 +139,10 @@ BEGIN
         END IF;
 
         UPDATE venus.ingredients
-           SET description = v_description,
+           SET description = COALESCE(
+                                 NULLIF(BTRIM(v_description), ''),
+                                 'Faz parte da fórmula, mas sua função cosmética específica ainda não está classificada no catálogo.'
+                             ),
                updated_at = NOW()
          WHERE ingredient_id = r.ingredient_id
            AND COALESCE(BTRIM(description), '') = '';
@@ -147,39 +150,33 @@ BEGIN
 END;
 $$;
 
--- IDs canônicos: CeraVe 1, La Roche-Posay 2 e Rexona 28.
+-- Consolida duplicidades por nome normalizado. Os IDs não são assumidos,
+-- porque podem variar entre ambientes; o menor ID existente vira o registro
+-- canônico e todos os produtos são reatribuídos antes da remoção dos demais.
 DO $$
 DECLARE
-    v_source_id BIGINT;
+    v_name TEXT;
     v_target_id BIGINT;
-    v_source_name TEXT;
-    v_target_name TEXT;
+    v_source_id BIGINT;
 BEGIN
-    FOR v_source_id, v_target_id IN
-        SELECT source_id, target_id
-          FROM (VALUES
-                    (4::BIGINT, 1::BIGINT),
-                    (5::BIGINT, 2::BIGINT),
-                    (21::BIGINT, 28::BIGINT)
-               ) AS mapping(source_id, target_id)
+    FOR v_name IN
+        SELECT LOWER(BTRIM(name))
+          FROM venus.brands
+         GROUP BY LOWER(BTRIM(name))
+        HAVING COUNT(*) > 1
     LOOP
-        SELECT name INTO v_source_name
+        SELECT MIN(brand_id)
+          INTO v_target_id
           FROM venus.brands
-         WHERE brand_id = v_source_id;
+         WHERE LOWER(BTRIM(name)) = v_name;
 
-        SELECT name INTO v_target_name
-          FROM venus.brands
-         WHERE brand_id = v_target_id;
-
-        IF v_source_name IS NOT NULL AND v_target_name IS NULL THEN
-            RAISE EXCEPTION 'Marca canônica ausente para consolidação: %', v_target_id;
-        END IF;
-
-        IF v_source_name IS NOT NULL AND v_source_name <> v_target_name THEN
-            RAISE EXCEPTION 'Marca duplicada % não corresponde à canônica %', v_source_name, v_target_name;
-        END IF;
-
-        IF v_source_name IS NOT NULL THEN
+        FOR v_source_id IN
+            SELECT brand_id
+              FROM venus.brands
+             WHERE LOWER(BTRIM(name)) = v_name
+               AND brand_id <> v_target_id
+             ORDER BY brand_id
+        LOOP
             UPDATE venus.products
                SET fk_brand_id = v_target_id,
                    updated_at = NOW()
@@ -187,7 +184,7 @@ BEGIN
 
             DELETE FROM venus.brands
              WHERE brand_id = v_source_id;
-        END IF;
+        END LOOP;
     END LOOP;
 END;
 $$;

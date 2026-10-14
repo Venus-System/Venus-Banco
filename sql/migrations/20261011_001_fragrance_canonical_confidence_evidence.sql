@@ -13,32 +13,38 @@ SET LOCAL search_path TO venus, public;
 DO $$
 DECLARE
     v_agent_category BIGINT;
+    v_parfum_id BIGINT;
+    v_fragrance_id BIGINT;
 BEGIN
     SELECT ingredient_category_id
       INTO v_agent_category
       FROM venus.ingredient_categories
      WHERE name = 'Agente Perfumante';
 
-    IF v_agent_category IS NULL OR v_agent_category <> 25 THEN
-        RAISE EXCEPTION 'Categoria Agente Perfumante ausente ou com ID inesperado: %', v_agent_category;
+    IF v_agent_category IS NULL THEN
+        RAISE EXCEPTION 'Categoria Agente Perfumante ausente';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-          FROM venus.ingredients
-         WHERE ingredient_id = 8104
-           AND inci_name = 'PARFUM'
-    ) THEN
-        RAISE EXCEPTION 'Ingrediente PARFUM (8104) não encontrado';
+    SELECT ingredient_id
+      INTO v_parfum_id
+      FROM venus.ingredients
+     WHERE UPPER(BTRIM(inci_name)) = 'PARFUM'
+     ORDER BY ingredient_id
+     LIMIT 1;
+
+    IF v_parfum_id IS NULL THEN
+        RAISE EXCEPTION 'Ingrediente PARFUM não encontrado';
     END IF;
 
-    IF NOT EXISTS (
-        SELECT 1
-          FROM venus.ingredients
-         WHERE ingredient_id = 8202
-           AND inci_name = 'PARFUM / FRAGRANCE'
-    ) THEN
-        RAISE EXCEPTION 'Ingrediente PARFUM / FRAGRANCE (8202) não encontrado';
+    SELECT ingredient_id
+      INTO v_fragrance_id
+      FROM venus.ingredients
+     WHERE UPPER(BTRIM(inci_name)) = 'PARFUM / FRAGRANCE'
+     ORDER BY ingredient_id
+     LIMIT 1;
+
+    IF v_fragrance_id IS NULL THEN
+        RAISE EXCEPTION 'Ingrediente PARFUM / FRAGRANCE não encontrado';
     END IF;
 END;
 $$;
@@ -46,11 +52,15 @@ $$;
 -- Os dois registros permanecem preservados para compatibilidade histórica,
 -- mas passam a compartilhar a categoria canônica e os dados exibidos.
 UPDATE venus.ingredients
-   SET fk_ingredient_category_id = 25,
+   SET fk_ingredient_category_id = (
+           SELECT ingredient_category_id
+             FROM venus.ingredient_categories
+            WHERE name = 'Agente Perfumante'
+       ),
        common_name = 'Fragrância',
        function_summary = 'Agente perfumante: confere ou compõe o aroma do produto.',
        updated_at = NOW()
- WHERE ingredient_id IN (8104, 8202);
+ WHERE UPPER(BTRIM(inci_name)) IN ('PARFUM', 'PARFUM / FRAGRANCE');
 
 -- PARFUM é o registro canônico para novas resoluções de FRAGRANCE/AROMA.
 -- PARFUM / FRAGRANCE continua como INCI histórico para os rótulos que o usam.
@@ -61,10 +71,15 @@ INSERT INTO venus.ingredient_aliases (
     source_type,
     source_reference
 )
-VALUES
-    (8104, 'FRAGRANCE', 'en', 'admin', 'migration:20261011_001_fragrance_canonical_confidence_evidence'),
-    (8104, 'PARFUM / FRAGRANCE', 'en', 'admin', 'migration:20261011_001_fragrance_canonical_confidence_evidence'),
-    (8104, 'AROMA', 'en', 'admin', 'migration:20261011_001_fragrance_canonical_confidence_evidence; cosmetic-context-only')
+SELECT i.ingredient_id, aliases.alias_name, aliases.alias_language,
+       aliases.source_type::venus.source_type_enum, aliases.source_reference
+  FROM venus.ingredients i
+ CROSS JOIN (VALUES
+    ('FRAGRANCE', 'en', 'admin', 'migration:20261011_001_fragrance_canonical_confidence_evidence'),
+    ('PARFUM / FRAGRANCE', 'en', 'admin', 'migration:20261011_001_fragrance_canonical_confidence_evidence'),
+    ('AROMA', 'en', 'admin', 'migration:20261011_001_fragrance_canonical_confidence_evidence; cosmetic-context-only')
+ ) AS aliases(alias_name, alias_language, source_type, source_reference)
+ WHERE UPPER(BTRIM(i.inci_name)) = 'PARFUM'
 ON CONFLICT (fk_ingredient_id, alias_name, alias_language) DO UPDATE SET
     source_type = EXCLUDED.source_type,
     source_reference = EXCLUDED.source_reference,
@@ -281,6 +296,6 @@ COMMENT ON VIEW venus.v_product_fragrance_flags IS
 -- Recalcula apenas os dois ingredientes normalizados; não executa a API.
 SELECT venus.fn_refresh_ingredient_risk_assessment_v1(ingredient_id)
   FROM venus.ingredients
- WHERE ingredient_id IN (8104, 8202);
+ WHERE UPPER(BTRIM(inci_name)) IN ('PARFUM', 'PARFUM / FRAGRANCE');
 
 COMMIT;
