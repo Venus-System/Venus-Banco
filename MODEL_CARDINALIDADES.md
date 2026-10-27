@@ -1,6 +1,6 @@
 # Venus — PK, FK e Cardinalidades
 
-> Este arquivo é o mapa resumido das relações operacionais. Para o detalhe fiel do banco implantado — todos os campos, tipos, nulabilidades, defaults, constraints, enums, FKs e views — consulte [`docs/database-logical-model.md`](docs/database-logical-model.md) e o [diagrama SVG](docs/database-logical-model.svg), gerados diretamente do catálogo PostgreSQL.
+> Este arquivo é o mapa resumido das relações operacionais. Para o desenho visual editável, consulte [`docs/modelos lógicos/`](<docs/modelos lógicos/>). Para o detalhe fiel do banco implantado — todos os campos, tipos, nulabilidades, defaults, constraints, enums, FKs e views — consulte [`docs/database-logical-model.md`](docs/database-logical-model.md) e o [diagrama SVG](docs/database-logical-model.svg), gerados diretamente do catálogo PostgreSQL.
 
 A documentação abaixo cobre as relações do modelo operacional. Tabelas associativas materializam N:N.
 

@@ -47,6 +47,9 @@ O pipeline usa `.env` como configuração padrão. A parte do banco Venus execut
 - `sql/50_bi.sql`: views dimensionais + CTE/window analytics.
 - `sql/60_rpa.sql`: controle/staging do RPA no banco novo; não cria o legado.
 - `ops/generate_database_model.py`: extrator somente leitura do catálogo PostgreSQL para documentação do modelo implantado.
+- `docs/ARQUITETURA.md`: visão geral dos schemas, camadas e fluxo de dados do banco.
+- `docs/architecture-overview.mmd`: mapa Mermaid resumido da arquitetura.
+- `docs/modelos lógicos/`: modelos lógicos editáveis do brModelo 3.2 e suas prévias.
 - `docs/database-logical-model.md`: inventário completo de tabelas, campos, constraints, relacionamentos, enums e views.
 - `docs/database-logical-model.svg`: imagem zoomável do modelo lógico físico.
 - `docs/DECISOES_SCORE_INGREDIENTES.md`: metodologia, eixos, fontes, proxies e regras de evidência dos ingredientes.
@@ -69,7 +72,7 @@ O catálogo foi ajustado para que `column_name=''` represente linhas de tabela. 
 
 Foram excluídos do caminho de execução: `1ano_venus_banco.sql`, `venusbackup.sql`, `venus_desligar_tabelas.sql`, `venus_carga_complementar_usuarios_testes.sql`, snapshots JSONL/CSV gerados, manifests de execuções anteriores e o script de benchmark `venus_explain_index_finished.sql`. Eles são históricos/diagnósticos, não são necessários para criar um ambiente novo.
 
-O modelo lógico `.brM3` também ficou fora do pacote executável por conter estruturas antigas que conflitam com o schema canônico.
+Os modelos `.brM3` atuais foram incorporados em `docs/modelos lógicos/` como documentação visual editável. Eles são separados do runtime: a execução continua sendo definida por `sql/00_schema.sql`, `sql/50_bi.sql`, `sql/60_rpa.sql` e pelas migrations. O snapshot gerado em `docs/database-logical-model.*` permanece como conferência automatizada contra o PostgreSQL de QA.
 
 ## Documentação do ETL de ingredientes
 
@@ -101,6 +104,9 @@ venus_postgres_pipeline_unificado/
 │   ├── venus_v12_load.sql       # carga bruta de ingredientes (fonte para o pipeline)
 │   └── ETL_INGREDIENTES/        # documentação completa do ETL que originou a carga
 ├── docs/
+│   ├── ARQUITETURA.md           # visão de schemas, camadas e fluxo de dados
+│   ├── architecture-overview.mmd # mapa resumido da arquitetura
+│   ├── modelos lógicos/         # fontes brM3 e prévias dos desenhos
 │   ├── database-logical-model.md # snapshot completo do modelo implantado
 │   ├── database-logical-model.mmd # fonte Mermaid do diagrama
 │   ├── database-logical-model.sql # snapshot lógico SQL
@@ -152,6 +158,8 @@ venus_postgres_pipeline_unificado/
 
 ## Documentação relacionada
 
+- `docs/ARQUITETURA.md` — arquitetura dos schemas e guia de leitura dos modelos.
+- `docs/modelos lógicos/` — arquivos brM3 editáveis e prévias exportadas.
 - `docs/database-logical-model.md` — snapshot do banco implantado, gerado diretamente dos metadados PostgreSQL.
 - `docs/database-logical-model.svg` — diagrama visual completo de tabelas, campos e FKs.
 - `AUDIT_DECISIONS.md` — o que foi mantido, removido e acrescentado na consolidação.

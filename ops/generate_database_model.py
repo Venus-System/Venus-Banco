@@ -441,9 +441,9 @@ def generate_markdown(
 ) -> str:
     fk_count = sum(len(t.fks) for t in tables.values())
     lines = [
-        "# Venus — Modelo lógico do banco",
+        "# Venus — Snapshot físico do banco",
         "",
-        "> Snapshot gerado a partir dos metadados do PostgreSQL implantado. A fonte desta versão é o catálogo do banco, não uma inferência a partir dos nomes dos campos.",
+        "> Snapshot gerado a partir dos metadados do PostgreSQL implantado. A fonte desta versão é o catálogo do banco, não uma inferência a partir dos nomes dos campos. O desenho visual editável está em [`docs/modelos lógicos/`](<modelos lógicos/>); este arquivo é a conferência técnica do modelo implantado.",
         "",
         f"- Banco: `{database_name}`",
         f"- Gerado em: `{generated_at}`",
@@ -455,6 +455,9 @@ def generate_markdown(
         "",
         "## Artefatos",
         "",
+        "- [Arquitetura dos schemas e guia de leitura](ARQUITETURA.md)",
+        "- [Mapa arquitetural resumido](architecture-overview.mmd)",
+        "- [Modelos visuais editáveis do brModelo](<modelos lógicos/README.md>)",
         "- [Diagrama visual completo — SVG](database-logical-model.svg)",
         "- [Fonte do diagrama — Mermaid](database-logical-model.mmd)",
         "- [Snapshot lógico SQL](database-logical-model.sql)",
@@ -537,7 +540,7 @@ def generate_markdown(
         "",
         "## Regra de atualização",
         "",
-        "Este documento é gerado por `python ops/generate_database_model.py` após uma alteração de schema ou migração. O gerador consulta somente metadados e não cria, altera ou remove objetos no banco.",
+        "Este documento é gerado por `python ops/generate_database_model.py` após uma alteração de schema ou migração. O gerador consulta somente metadados e não cria, altera ou remove objetos no banco. Os arquivos brM3 em `docs/modelos lógicos/` continuam sendo os desenhos visuais editáveis.",
         "",
     ])
     return "\n".join(lines)
