@@ -26,6 +26,14 @@ e Databricks.
 
 ## Arquitetura ponta a ponta
 
+![Desenho da arquitetura de dados do Venus](docs/arquitetura-dados/venus-data-architecture.svg)
+
+_Desenho estático versionado para garantir a visualização no GitHub. A fonte
+editável em Mermaid permanece disponível abaixo._
+
+<details>
+<summary>Fonte editável Mermaid</summary>
+
 ```mermaid
 flowchart LR
     subgraph ingestion["Ingestão e captura"]
@@ -48,11 +56,13 @@ flowchart LR
     rpa --> core
     core --> audit
     core --> bi
-    core --> graph[("Neo4j - grafo derivado")]
+    core --> neo4jGraph[("Neo4j - grafo derivado")]
     bi --> databricks["Databricks - consumo analítico"]
-    media -. "metadados" .-> core
-    core -. "não evidenciado no repo" .-> redis[("Redis")]
+    media -.->|metadados| core
+    core -.->|não evidenciado no repo| redis[("Redis")]
 ```
+
+</details>
 
 ### Como os dados atravessam a arquitetura
 
