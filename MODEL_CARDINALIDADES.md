@@ -1,5 +1,7 @@
 # Venus — PK, FK e Cardinalidades
 
+> Este arquivo é o mapa resumido das relações operacionais. Para o desenho visual editável, consulte [`docs/modelos lógicos/`](<docs/modelos lógicos/>). Para o detalhe fiel do banco implantado — todos os campos, tipos, nulabilidades, defaults, constraints, enums, FKs e views — consulte [`docs/database-logical-model.md`](docs/database-logical-model.md) e o [diagrama SVG](docs/database-logical-model.svg), gerados diretamente do catálogo PostgreSQL.
+
 A documentação abaixo cobre as relações do modelo operacional. Tabelas associativas materializam N:N.
 
 - users 1:1 user_profiles; users 1:1 user_preferences.
@@ -17,7 +19,7 @@ A documentação abaixo cobre as relações do modelo operacional. Tabelas assoc
 - users N:N products via favorites; user_lists N:N products via user_list_items; users N:N reviews via review_votes.
 - users 1:N user_access_events.
 
-As PKs e FKs estão definidas no `sql/00_schema.sql`; restrições UNIQUE implementam as relações 1:1.
+As PKs e FKs estão definidas no schema implantado e são reproduzidas no snapshot gerado. No código-fonte, a criação inicial fica em `sql/00_schema.sql` e as mudanças incrementais em `sql/migrations/`; restrições UNIQUE implementam as relações 1:1.
 
 ## Legenda
 

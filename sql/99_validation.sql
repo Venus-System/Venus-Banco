@@ -17,6 +17,74 @@ UNION ALL SELECT 'products', COUNT(*) FROM venus.products
 UNION ALL SELECT 'users', COUNT(*) FROM venus.users
 ORDER BY check_name;
 
+SELECT 'invalid_ingredient_confidence' AS check_name,
+       COUNT(*) AS total
+FROM venus.ingredients
+WHERE scientific_confidence IS NULL
+   OR scientific_confidence NOT BETWEEN 1 AND 100;
+
+SELECT 'invalid_classification_confidence' AS check_name,
+       COUNT(*) AS total
+FROM (
+    SELECT confidence_score FROM venus.product_scores
+    UNION ALL
+    SELECT confidence_score FROM venus.analysis_results
+    UNION ALL
+    SELECT confidence_score FROM venus.recommendations
+) scores
+WHERE confidence_score IS NULL
+   OR confidence_score NOT BETWEEN 1 AND 100;
+
+SELECT 'blocked_placeholder_product_scores' AS check_name,
+       COUNT(*) AS total
+FROM venus.product_scores ps
+JOIN venus.product_versions pv
+  ON pv.product_version_id = ps.fk_product_version_id
+WHERE ps.overall_score = 0
+  AND COALESCE(ps.health_score, 0) = 0
+  AND COALESCE(ps.environmental_score, 0) = 0
+  AND COALESCE(ps.ethical_score, 0) = 0
+  AND COALESCE(ps.performance_score, 0) = 0
+  AND COALESCE(ps.transparency_score, 0) = 0
+  AND (
+      pv.status = 'needs_review'
+      OR NOT EXISTS (
+          SELECT 1
+          FROM venus.product_ingredients pi
+          WHERE pi.fk_product_version_id = pv.product_version_id
+      )
+  );
+
+SELECT 'current_verified_versions_without_product_score' AS check_name,
+       COUNT(*) AS total
+FROM venus.product_versions pv
+WHERE pv.is_current
+  AND pv.status = 'verified'
+  AND EXISTS (
+      SELECT 1
+      FROM venus.product_ingredients pi
+      WHERE pi.fk_product_version_id = pv.product_version_id
+  )
+  AND NOT EXISTS (
+      SELECT 1
+      FROM venus.product_scores ps
+      JOIN venus.scoring_models sm
+        ON sm.scoring_model_id = ps.fk_scoring_model_id
+       AND sm.is_active
+      WHERE ps.fk_product_version_id = pv.product_version_id
+  );
+
+SELECT 'current_verified_versions_without_ingredients' AS check_name,
+       COUNT(*) AS total
+FROM venus.product_versions pv
+WHERE pv.is_current
+  AND pv.status = 'verified'
+  AND NOT EXISTS (
+      SELECT 1
+      FROM venus.product_ingredients pi
+      WHERE pi.fk_product_version_id = pv.product_version_id
+  );
+
 SELECT 'active_scoring_models' AS check_name, COUNT(*) AS total
 FROM venus.scoring_models
 WHERE is_active;

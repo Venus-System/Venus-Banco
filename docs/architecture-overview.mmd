@@ -1,0 +1,49 @@
+%% Visão arquitetural resumida; o ERD detalhado está nos arquivos brM3 e no snapshot físico.
+flowchart LR
+    LEGACY[(Banco legado externo)]
+    RPA[rpa_migrate.py]
+
+    subgraph RPA_SCHEMA[venus_rpa — integração e staging]
+        RUN[rpa_run]
+        STAGE_P[rpa_stage_product]
+        STAGE_U[rpa_stage_user]
+        ERR[rpa_error]
+        RUN --> STAGE_P
+        RUN --> STAGE_U
+        RUN --> ERR
+    end
+
+    subgraph CORE[venus — núcleo transacional]
+        ID[Identidade e perfis]
+        CATALOG[Catálogo de produtos]
+        ING[Ingredientes e regulação]
+        SCORE[Scoring e recomendações]
+        ENGAGE[Listas, reviews e eventos]
+        ID --> SCORE
+        CATALOG --> ING
+        CATALOG --> SCORE
+        ING --> SCORE
+        ID --> ENGAGE
+        CATALOG --> ENGAGE
+    end
+
+    subgraph AUDIT[venus_audit]
+        AUDIT_LOG[audit_logs]
+    end
+
+    subgraph BI[venus_bi — somente views]
+        DIM[Dimensões]
+        FACT[Fatos]
+        KPI[KPIs e rankings]
+        DIM --> KPI
+        FACT --> KPI
+    end
+
+    OPT[venus_optimization.readme]
+
+    LEGACY --> RPA --> RPA_SCHEMA
+    STAGE_P -. carrega .-> CATALOG
+    STAGE_U -. carrega .-> ID
+    CORE -. triggers de auditoria .-> AUDIT_LOG
+    CORE --> BI
+    CORE -. extensão futura .-> OPT
