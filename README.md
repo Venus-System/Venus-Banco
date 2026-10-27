@@ -20,6 +20,41 @@ nível: [`sql/`](sql/), [`mongodb/`](mongodb/), [`neo4j/`](neo4j/),
 [`redis/`](redis/), [`databricks/`](databricks/), [`ocr/`](ocr/) e
 [`cloudinary/`](cloudinary/).
 
+## Desenho da arquitetura
+
+```mermaid
+flowchart LR
+    client["Web / Mobile"] --> ocr["OCR e interpretação"]
+    client --> media["Cloudinary - binário das imagens"]
+    ocr --> scans[("MongoDB - scan_sessions")]
+    scans --> review["Revisão administrativa"]
+    review --> projection["Projeção aprovada"]
+
+    legacy["Banco legado externo"] --> rpa["venus_rpa - staging e execução"]
+
+    subgraph postgresql["PostgreSQL - Venus"]
+        core[("venus - catálogo operacional")]
+        audit[("venus_audit - auditoria")]
+        bi[("venus_bi - views analíticas")]
+    end
+
+    projection --> core
+    rpa --> core
+    core --> audit
+    core --> graph[("Neo4j - grafo derivado")]
+    bi --> databricks["Databricks - consumo analítico"]
+    core -. "não evidenciado no repo" .-> redis[("Redis")]
+    core --> bi
+    media -. "metadados" .-> core
+```
+
+O PostgreSQL é a fonte operacional depois da aprovação do scan. O MongoDB
+preserva o contexto bruto e o workflow de revisão; o Cloudinary mantém os
+binários; o Neo4j representa uma projeção derivada; e as views `venus_bi` são
+consumidas pelo Databricks. Redis permanece explicitamente como não evidenciado
+neste repositório. Para detalhes, consulte
+[`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
+
 ## Início rápido
 
 ```bash
