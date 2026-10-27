@@ -39,8 +39,8 @@ Depois do upload, a API valida a resposta e grava `venus.media_assets`.
 
 ## Relação com o schema
 
-`venus.media_assets` é criada e mantida por `sql/05_cloudinary_images.sql`, executado pelo `pipeline.py` durante o bootstrap. As colunas de conveniência `avatar_*`/`photo_*` que existiam em versões anteriores foram removidas do modelo atual; o snapshot gerado em [`docs/database-logical-model.md`](docs/database-logical-model.md) é a referência da estrutura vigente.
+`venus.media_assets` é criada e mantida por `sql/05_cloudinary_images.sql`, executado pelo `pipeline.py` durante o bootstrap. As colunas de conveniência `avatar_*`/`photo_*` que existiam em versões anteriores foram removidas do modelo atual; o snapshot gerado em [`../docs/database-logical-model.md`](../docs/database-logical-model.md) é a referência da estrutura vigente.
 
-## Este documento vs. `CLOUDINARY_API.md`
+## Este documento vs. `API.md`
 
-Este arquivo descreve o **modelo de dados** canônico de imagens (tabela, tipos, ciclo de vida). Para o **contrato de API** completo — endpoint de assinatura, formato de request/response, checklist de segurança e configuração do preset no Cloudinary Console — consulte `CLOUDINARY_API.md`.
+Este arquivo descreve o **modelo de dados** canônico de imagens (tabela, tipos, ciclo de vida). Para o **contrato de API** completo — endpoint de assinatura, formato de request/response, checklist de segurança e configuração do preset no Cloudinary Console — consulte [`API.md`](API.md).

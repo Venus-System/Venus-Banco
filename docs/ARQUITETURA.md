@@ -47,7 +47,7 @@ Legado externo ─► venus_rpa ──┴──► venus
 | Aplicação | Captura imagem, inicia OCR e apresenta resultados. | Interface descrita; código da aplicação não está neste repo. |
 | OCR | Extrai texto, qualidade, candidatos e interpretação. | Contrato documentado; worker não está neste repo. |
 | Cloudinary | Binário das imagens. | Contrato e SQL de metadados implementados. |
-| MongoDB | Documento do scan, revisão e sincronização. | Scripts fornecidos incorporados em `arquitetura-dados/mongodb`. |
+| MongoDB | Documento do scan, revisão e sincronização. | Scripts fornecidos em `../mongodb/`. |
 | PostgreSQL | Catálogo operacional, integridade, auditoria, RPA e BI. | Implementado e validado em QA. |
 | Neo4j | Grafo derivado para compatibilidade e ordem de uso. | Scripts fornecidos; conector não está neste repo. |
 | Redis | Cache/fila, se adotado. | Nenhuma implementação evidenciada. |
@@ -88,7 +88,7 @@ está em [`modelos lógicos/`](<modelos lógicos/>).
    recomendações.
 8. `venus_bi` publica dimensões, fatos, KPIs e rankings para consumo analítico.
 
-Detalhes da fronteira OCR estão em [`arquitetura-dados/ocr/`](<arquitetura-dados/ocr/>).
+Detalhes da fronteira OCR estão em [`../ocr/`](../ocr/).
 
 ## RPA do legado
 
@@ -98,7 +98,7 @@ configuradas, grava a execução em `venus_rpa.rpa_run`, mantém staging em
 carrega os registros válidos em `venus`.
 
 O pacote não cria nem simula o banco legado. A documentação SQL e as tabelas de
-staging estão em [`arquitetura-dados/sql/README.md`](<arquitetura-dados/sql/README.md>).
+staging estão em [`../sql/README.md`](../sql/README.md).
 
 ## BI e Databricks
 
@@ -108,7 +108,7 @@ Databricks é consumidor analítico e não deve escrever de volta na camada
 operacional.
 
 Não há notebooks ou jobs Databricks versionados neste repositório. O contrato e
-os limites estão em [`arquitetura-dados/databricks/README.md`](<arquitetura-dados/databricks/README.md>).
+os limites estão em [`../databricks/README.md`](../databricks/README.md).
 
 ## Manutenção
 

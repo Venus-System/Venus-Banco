@@ -3,7 +3,7 @@
 > Snapshot gerado a partir dos metadados do PostgreSQL implantado. A fonte desta versão é o catálogo do banco, não uma inferência a partir dos nomes dos campos. O desenho visual editável está em [`docs/modelos lógicos/`](<modelos lógicos/>); este arquivo é a conferência técnica do modelo implantado.
 
 - Banco: `Venus-qa`
-- Gerado em: `2026-10-26 22:03:17 -0300`
+- Gerado em: `2026-10-26 22:11:11 -0300`
 - Schemas de tabelas: `venus, venus_audit, venus_rpa, venus_optimization`
 - Tabelas físicas: **65**
 - Relacionamentos FK: **79**
@@ -16,7 +16,7 @@
 - [Arquitetura dos schemas e guia de leitura](ARQUITETURA.md)
 - [Arquitetura de dados por tecnologia](arquitetura-dados/README.md)
 - [Operação e validação](OPERACAO.md)
-- [Mapa arquitetural resumido](architecture-overview.mmd)
+- [Mapa arquitetural resumido](arquitetura-dados/architecture-overview.mmd)
 - [Modelos visuais editáveis do brModelo](<modelos lógicos/README.md>)
 - [Diagrama visual completo — SVG](database-logical-model.svg)
 - [Fonte do diagrama — Mermaid](database-logical-model.mmd)

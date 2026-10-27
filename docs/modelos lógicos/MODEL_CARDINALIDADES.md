@@ -1,6 +1,6 @@
 # Venus — PK, FK e Cardinalidades
 
-> Este arquivo é o mapa resumido das relações operacionais. Para o desenho visual editável, consulte [`docs/modelos lógicos/`](<docs/modelos lógicos/>). Para o detalhe fiel do banco implantado — todos os campos, tipos, nulabilidades, defaults, constraints, enums, FKs e views — consulte [`docs/database-logical-model.md`](docs/database-logical-model.md) e o [diagrama SVG](docs/database-logical-model.svg), gerados diretamente do catálogo PostgreSQL.
+> Este arquivo é o mapa resumido das relações operacionais. Para o desenho visual editável, consulte [`./`](./). Para o detalhe fiel do banco implantado — todos os campos, tipos, nulabilidades, defaults, constraints, enums, FKs e views — consulte [`../database-logical-model.md`](../database-logical-model.md) e o [diagrama SVG](../database-logical-model.svg), gerados diretamente do catálogo PostgreSQL.
 
 A documentação abaixo cobre as relações do modelo operacional. Tabelas associativas materializam N:N.
 
@@ -46,4 +46,4 @@ Este mapa de cardinalidades serve como referência rápida ao escrever consultas
 
 ## Hierarquias
 
-`ingredient_categories` é uma tabela auto-referenciada (`parent_ingredient_category_id`), formando uma hierarquia 1:N recursiva. Consultas que precisem percorrer essa hierarquia (por exemplo, para agregar ingredientes por categoria-mãe) devem usar uma CTE recursiva, como a documentada em `AUDIT_DECISIONS.md`.
+`ingredient_categories` é uma tabela auto-referenciada (`parent_ingredient_category_id`), formando uma hierarquia 1:N recursiva. Consultas que precisem percorrer essa hierarquia (por exemplo, para agregar ingredientes por categoria-mãe) devem usar uma CTE recursiva, como a documentada em `../AUDIT_DECISIONS.md`.

@@ -10,8 +10,9 @@ uma lista estática de bytes fica obsoleta rapidamente.
 - [`docs/README.md`](docs/README.md) — índice completo da documentação.
 - [`docs/database-logical-model.md`](docs/database-logical-model.md) — catálogo
   gerado do PostgreSQL real.
-- [`docs/arquitetura-dados/`](<docs/arquitetura-dados/>) — documentação por
-  tecnologia e limites de evidência.
+- [`sql/`](sql/), [`mongodb/`](mongodb/), [`neo4j/`](neo4j/), [`redis/`](redis/),
+  [`databricks/`](databricks/), [`ocr/`](ocr/) e [`cloudinary/`](cloudinary/)
+  — documentação e scripts agrupados por tecnologia.
 
 ## Integridade sob demanda
 

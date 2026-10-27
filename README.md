@@ -15,6 +15,11 @@ integrações externas são documentadas com o nível de evidência disponível.
    físico real do PostgreSQL, incluindo todas as tabelas e relacionamentos.
 5. [`docs/OPERACAO.md`](docs/OPERACAO.md) — instalação, execução e validação.
 
+Os scripts e contratos de cada tecnologia ficam agrupados em pastas de primeiro
+nível: [`sql/`](sql/), [`mongodb/`](mongodb/), [`neo4j/`](neo4j/),
+[`redis/`](redis/), [`databricks/`](databricks/), [`ocr/`](ocr/) e
+[`cloudinary/`](cloudinary/).
+
 ## Início rápido
 
 ```bash
@@ -37,15 +42,15 @@ externo e somente leitura.
 5. valida o estado do banco.
 
 `--reset` e os modos de reconstrução são destrutivos. Leia
-[`docs/OPERACAO.md`](docs/OPERACAO.md) e [`BACKUP_RECOVERY.md`](BACKUP_RECOVERY.md)
+[`docs/OPERACAO.md`](docs/OPERACAO.md) e [`docs/BACKUP_RECOVERY.md`](docs/BACKUP_RECOVERY.md)
 antes de usá-los.
 
 ## Arquitetura SQL
 
 | Camada | Arquivos principais |
 |---|---|
-| Modelo operacional | `sql/00_schema.sql` e `sql/migrations/` |
-| Mídia | `sql/05_cloudinary_images.sql` e `cloudinary_service.py` |
+| Modelo operacional | [`sql/`](sql/) e `sql/migrations/` |
+| Mídia | [`cloudinary/`](cloudinary/) e `cloudinary_service.py` |
 | Dados mestres | `sql/10_reference_seed.sql`, `sql/20_regulation_seed.sql` |
 | Catálogo técnico | `sql/40_data_catalog.sql` |
 | BI | `sql/50_bi.sql` → schema `venus_bi` |
@@ -77,15 +82,18 @@ O gerador é somente leitura no banco e atualiza os artefatos em
 
 ```text
 Venus-Banco/
+├── sql/                        # PostgreSQL, BI, RPA e migrations
+├── mongodb/                    # contrato e scripts de scan_sessions
+├── neo4j/                      # cargas, constraints e consultas do grafo
+├── redis/                      # status e contrato Redis
+├── databricks/                 # contrato de consumo analítico
+├── ocr/                        # fluxo de OCR e projeção
+├── cloudinary/                 # API, mídia e metadados
 ├── pipeline.py                 # bootstrap e orquestração
 ├── rpa_migrate.py              # legado externo -> venus_rpa/venus
 ├── cloudinary_service.py       # operações backend-only de mídia
-├── sql/                        # schema, seeds, BI, RPA e migrations
 ├── data/                       # carga e ETL de ingredientes
-├── docs/                       # documentação canônica e modelos lógicos
-│   ├── arquitetura-dados/     # SQL, MongoDB, Neo4j, Redis, OCR e BI
-│   ├── database-logical-model.*
-│   └── modelos lógicos/       # fontes editáveis brModelo
+├── docs/                       # arquitetura transversal e modelos lógicos
 └── ops/                        # backup, restore e geração de documentação
 ```
 

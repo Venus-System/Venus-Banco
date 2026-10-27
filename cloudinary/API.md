@@ -187,6 +187,6 @@ Ao implementar o endpoint `/api/v1/media/signature` e o fluxo de callback, confi
 
 ## Ver também
 
-- `CLOUDINARY_IMAGES.md` — visão resumida do modelo canônico de imagens e do ciclo de vida do asset.
+- [`MODELO_DADOS.md`](MODELO_DADOS.md) — visão resumida do modelo canônico de imagens e do ciclo de vida do asset.
 - `README.md` — seção "Imagens / Cloudinary" com o resumo da arquitetura no contexto geral do pacote.
 - `.env.example` — modelo das variáveis `CLOUDINARY_*` consumidas por `cloudinary_service.py`.

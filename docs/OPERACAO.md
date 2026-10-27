@@ -40,7 +40,7 @@ fica em [`database-logical-model.md`](database-logical-model.md).
 
 `--reset`, `--rebuild-preserve-data-except-audit` e restaurações com
 `pg_restore --clean` podem remover objetos ou dados. Faça backup antes e siga
-[`../BACKUP_RECOVERY.md`](../BACKUP_RECOVERY.md). Não execute essas operações
+[`BACKUP_RECOVERY.md`](BACKUP_RECOVERY.md). Não execute essas operações
 contra o banco real sem aprovação explícita e janela de manutenção.
 
 ## Manutenção da documentação
