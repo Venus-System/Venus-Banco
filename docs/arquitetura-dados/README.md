@@ -6,6 +6,12 @@ cada tecnologia ficam nas pastas de primeiro nível do repositório: `sql/`,
 
 ## Fluxo canônico
 
+![Desenho da arquitetura de dados do Venus](venus-data-architecture.svg)
+
+O SVG acima é a visualização estática versionada para leitores do GitHub. O
+arquivo [`architecture-overview.mmd`](architecture-overview.mmd) permanece como
+fonte editável do diagrama.
+
 ```mermaid
 flowchart LR
     C[Web / Mobile] --> I[OCR e interpretação]

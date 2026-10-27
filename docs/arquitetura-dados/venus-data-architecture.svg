@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Arquitetura de dados do Venus</title>
+  <desc id="desc">Desenho da arquitetura ponta a ponta, desde Web e Mobile, OCR, Cloudinary e MongoDB, passando pela revisão e pelo PostgreSQL, até Neo4j, Databricks e Redis.</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrowDashed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+    </marker>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <style>
+      .canvas { fill: #f8fafc; }
+      .title { font: 700 30px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 400 15px "Segoe UI", Arial, sans-serif; fill: #475569; }
+      .lane { fill: #ffffff; stroke: #cbd5e1; stroke-width: 2; rx: 18; }
+      .laneTitle { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #334155; letter-spacing: .3px; }
+      .laneNote { font: 400 12px "Segoe UI", Arial, sans-serif; fill: #64748b; }
+      .card { fill: #ffffff; stroke: #94a3b8; stroke-width: 1.5; rx: 12; filter: url(#shadow); }
+      .cardCore { fill: #eff6ff; stroke: #2563eb; stroke-width: 2; rx: 12; filter: url(#shadow); }
+      .cardDerived { fill: #f5f3ff; stroke: #7c3aed; stroke-width: 1.8; rx: 12; filter: url(#shadow); }
+      .cardMuted { fill: #f8fafc; stroke: #94a3b8; stroke-width: 1.5; stroke-dasharray: 6 5; rx: 12; }
+      .cardTitle { font: 700 16px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .cardText { font: 400 13px "Segoe UI", Arial, sans-serif; fill: #475569; }
+      .cardSmall { font: 600 11px "Segoe UI", Arial, sans-serif; fill: #2563eb; letter-spacing: .4px; text-transform: uppercase; }
+      .arrow { fill: none; stroke: #64748b; stroke-width: 2.4; marker-end: url(#arrow); }
+      .arrowDashed { fill: none; stroke: #94a3b8; stroke-width: 2.2; stroke-dasharray: 8 7; marker-end: url(#arrowDashed); }
+      .edgeLabel { font: 600 12px "Segoe UI", Arial, sans-serif; fill: #475569; }
+      .footer { font: 400 12px "Segoe UI", Arial, sans-serif; fill: #64748b; }
+      .legendLine { stroke: #64748b; stroke-width: 2.2; marker-end: url(#arrow); }
+      .legendDash { stroke: #94a3b8; stroke-width: 2.2; stroke-dasharray: 8 7; marker-end: url(#arrowDashed); }
+    </style>
+  </defs>
+
+  <rect class="canvas" x="0" y="0" width="1600" height="900"/>
+  <text class="title" x="40" y="52">Arquitetura de dados do Venus</text>
+  <text class="subtitle" x="40" y="78">Fluxo ponta a ponta: captura, OCR, revisão, operação, grafo e análises</text>
+
+  <line class="legendLine" x1="1050" y1="58" x2="1100" y2="58"/>
+  <text class="edgeLabel" x="1112" y="63">fluxo implementado</text>
+  <line class="legendDash" x1="1300" y1="58" x2="1350" y2="58"/>
+  <text class="edgeLabel" x="1362" y="63">metadado / limite de evidência</text>
+
+  <rect class="lane" x="30" y="125" width="410" height="710"/>
+  <rect class="lane" x="465" y="125" width="510" height="710"/>
+  <rect class="lane" x="1000" y="125" width="570" height="710"/>
+
+  <text class="laneTitle" x="55" y="160">ENTRADAS E CAPTURA</text>
+  <text class="laneNote" x="55" y="181">Interfaces, imagem, documento e legado</text>
+  <text class="laneTitle" x="490" y="160">POSTGRESQL OPERACIONAL</text>
+  <text class="laneNote" x="490" y="181">Fonte de verdade após a aprovação</text>
+  <text class="laneTitle" x="1025" y="160">DERIVAÇÕES E CONSUMO</text>
+  <text class="laneNote" x="1025" y="181">Projeções e camada analítica</text>
+
+  <rect class="card" x="60" y="215" width="155" height="78"/>
+  <text class="cardTitle" x="82" y="247">Web / Mobile</text>
+  <text class="cardText" x="82" y="270">captura e consulta</text>
+
+  <rect class="card" x="260" y="215" width="155" height="78"/>
+  <text class="cardTitle" x="282" y="247">OCR</text>
+  <text class="cardText" x="282" y="270">texto e candidatos</text>
+
+  <rect class="card" x="60" y="345" width="155" height="78"/>
+  <text class="cardTitle" x="82" y="377">Cloudinary</text>
+  <text class="cardText" x="82" y="400">binário das imagens</text>
+
+  <rect class="card" x="260" y="345" width="155" height="78"/>
+  <text class="cardTitle" x="282" y="377">MongoDB</text>
+  <text class="cardText" x="282" y="400">scan_sessions</text>
+
+  <rect class="card" x="260" y="475" width="155" height="78"/>
+  <text class="cardTitle" x="282" y="507">Revisão</text>
+  <text class="cardText" x="282" y="530">decisão aprovada</text>
+
+  <rect class="card" x="60" y="700" width="155" height="78"/>
+  <text class="cardTitle" x="82" y="732">Legado externo</text>
+  <text class="cardText" x="82" y="755">somente leitura</text>
+
+  <rect class="card" x="260" y="700" width="155" height="78"/>
+  <text class="cardTitle" x="282" y="732">venus_rpa</text>
+  <text class="cardText" x="282" y="755">staging e carga</text>
+
+  <line class="arrow" x1="215" y1="254" x2="260" y2="254"/>
+  <line class="arrow" x1="138" y1="293" x2="138" y2="345"/>
+  <line class="arrow" x1="338" y1="293" x2="338" y2="345"/>
+  <line class="arrow" x1="338" y1="423" x2="338" y2="475"/>
+  <line class="arrow" x1="215" y1="739" x2="260" y2="739"/>
+  <text class="edgeLabel" x="225" y="724">extrai</text>
+  <text class="edgeLabel" x="347" y="459">revisa</text>
+
+  <rect class="cardCore" x="520" y="215" width="400" height="95"/>
+  <text class="cardSmall" x="548" y="243">fonte operacional</text>
+  <text class="cardTitle" x="548" y="269">PostgreSQL Venus</text>
+  <text class="cardText" x="548" y="291">65 tabelas físicas • 79 FKs • QA validado</text>
+
+  <rect class="card" x="520" y="390" width="185" height="88"/>
+  <text class="cardTitle" x="542" y="423">venus</text>
+  <text class="cardText" x="542" y="446">catálogo, usuários</text>
+  <text class="cardText" x="542" y="463">composição e scoring</text>
+
+  <rect class="card" x="735" y="390" width="185" height="88"/>
+  <text class="cardTitle" x="757" y="423">venus_rpa</text>
+  <text class="cardText" x="757" y="446">execuções e staging</text>
+  <text class="cardText" x="757" y="463">do legado</text>
+
+  <rect class="card" x="520" y="540" width="185" height="88"/>
+  <text class="cardTitle" x="542" y="573">venus_audit</text>
+  <text class="cardText" x="542" y="596">histórico de alterações</text>
+
+  <rect class="card" x="735" y="540" width="185" height="88"/>
+  <text class="cardTitle" x="757" y="573">venus_bi</text>
+  <text class="cardText" x="757" y="596">views analíticas</text>
+
+  <line class="arrow" x1="720" y1="310" x2="612" y2="390"/>
+  <line class="arrow" x1="720" y1="310" x2="828" y2="390"/>
+  <line class="arrow" x1="612" y1="478" x2="612" y2="540"/>
+  <line class="arrow" x1="828" y1="478" x2="828" y2="540"/>
+  <text class="edgeLabel" x="625" y="365">promove</text>
+  <text class="edgeLabel" x="850" y="365">registra</text>
+
+  <path class="arrow" d="M415 514 C455 514, 475 270, 520 270"/>
+  <text class="edgeLabel" x="435" y="385">projeção aprovada</text>
+  <path class="arrow" d="M415 739 C465 739, 480 450, 520 450"/>
+  <text class="edgeLabel" x="425" y="665">carga válida</text>
+  <path class="arrowDashed" d="M215 384 C350 384, 400 310, 520 310"/>
+  <text class="edgeLabel" x="300" y="360">metadados</text>
+
+  <rect class="cardDerived" x="1080" y="230" width="390" height="100"/>
+  <text class="cardSmall" x="1108" y="259" style="fill:#7c3aed">projeção derivada</text>
+  <text class="cardTitle" x="1108" y="285">Neo4j</text>
+  <text class="cardText" x="1108" y="308">grafo de composição e compatibilidade</text>
+
+  <rect class="cardDerived" x="1080" y="430" width="390" height="100"/>
+  <text class="cardSmall" x="1108" y="459" style="fill:#7c3aed">consumo analítico</text>
+  <text class="cardTitle" x="1108" y="485">Databricks</text>
+  <text class="cardText" x="1108" y="508">BI, exploração e análises</text>
+
+  <rect class="cardMuted" x="1080" y="630" width="390" height="100"/>
+  <text class="cardSmall" x="1108" y="659" style="fill:#64748b">não evidenciado no repositório</text>
+  <text class="cardTitle" x="1108" y="685">Redis</text>
+  <text class="cardText" x="1108" y="708">cache ou fila potencial</text>
+
+  <path class="arrow" d="M920 263 C980 263, 1015 280, 1080 280"/>
+  <text class="edgeLabel" x="954" y="245">projeta</text>
+  <path class="arrow" d="M920 584 C985 584, 1015 480, 1080 480"/>
+  <text class="edgeLabel" x="957" y="535">publica views</text>
+  <path class="arrowDashed" d="M920 292 C1000 320, 1025 680, 1080 680"/>
+  <text class="edgeLabel" x="965" y="650">possível cache</text>
+
+  <line x1="55" y1="808" x2="1545" y2="808" stroke="#e2e8f0" stroke-width="1"/>
+  <text class="footer" x="55" y="832">Evidência principal: PostgreSQL Venus-qa, validado em modo READ ONLY em 26/10/2026.</text>
+  <text class="footer" x="55" y="853">Linhas tracejadas representam metadados ou componentes sem implementação comprovada neste repositório.</text>
+</svg>
