@@ -1,61 +1,116 @@
 # Venus-Banco
 
-Bootstrap e documentação da arquitetura de dados do Venus. O pacote mantém o
-PostgreSQL operacional e seus artefatos de carga, auditoria, RPA e BI. As
-integrações externas são documentadas com o nível de evidência disponível.
+Repositório de bootstrap, contratos e documentação da arquitetura de dados do
+Venus. O projeto mantém o PostgreSQL operacional — catálogo, scoring, auditoria,
+RPA e BI — e documenta as fronteiras com OCR, MongoDB, Neo4j, Redis, Cloudinary
+e Databricks.
 
-## Leitura recomendada
+> **Regra de leitura:** o PostgreSQL foi validado diretamente no banco de QA.
+> MongoDB e Neo4j possuem scripts de referência incorporados do pacote entregue;
+> Redis e Databricks permanecem explicitamente limitados à evidência versionada.
 
-1. [`docs/README.md`](docs/README.md) — índice da documentação.
-2. [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) — fluxo ponta a ponta, do OCR
-   ao consumo das views no Databricks.
-3. [`docs/arquitetura-dados/README.md`](docs/arquitetura-dados/README.md) —
-   separação por SQL, MongoDB, Neo4j, Redis, OCR, Cloudinary e Databricks.
-4. [`docs/database-logical-model.md`](docs/database-logical-model.md) — estado
-   físico real do PostgreSQL, incluindo todas as tabelas e relacionamentos.
-5. [`docs/OPERACAO.md`](docs/OPERACAO.md) — instalação, execução e validação.
+## Navegação rápida
 
-Os scripts e contratos de cada tecnologia ficam agrupados em pastas de primeiro
-nível: [`sql/`](sql/), [`mongodb/`](mongodb/), [`neo4j/`](neo4j/),
-[`redis/`](redis/), [`databricks/`](databricks/), [`ocr/`](ocr/) e
-[`cloudinary/`](cloudinary/).
+| Preciso entender… | Começo aqui |
+|---|---|
+| Arquitetura completa | [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md) |
+| Mapa por tecnologia | [`docs/arquitetura-dados/README.md`](docs/arquitetura-dados/README.md) |
+| Todas as tabelas, campos e relacionamentos | [`docs/database-logical-model.md`](docs/database-logical-model.md) |
+| Modelos lógicos editáveis | [`docs/modelos lógicos/README.md`](<docs/modelos lógicos/README.md>) |
+| Instalação, bootstrap e validação | [`docs/OPERACAO.md`](docs/OPERACAO.md) |
+| Contrato PostgreSQL | [`sql/README.md`](sql/README.md) |
+| OCR e documento bruto | [`ocr/README.md`](ocr/README.md) e [`mongodb/README.md`](mongodb/README.md) |
+| Grafo derivado | [`neo4j/README.md`](neo4j/README.md) |
+| Mídia | [`cloudinary/README.md`](cloudinary/README.md) |
+| ETL de ingredientes | [`data/ETL_INGREDIENTES/README.md`](data/ETL_INGREDIENTES/README.md) |
 
-## Desenho da arquitetura
+## Arquitetura ponta a ponta
 
 ```mermaid
 flowchart LR
-    client["Web / Mobile"] --> ocr["OCR e interpretação"]
-    client --> media["Cloudinary - binário das imagens"]
-    ocr --> scans[("MongoDB - scan_sessions")]
-    scans --> review["Revisão administrativa"]
-    review --> projection["Projeção aprovada"]
+    subgraph ingestion["Ingestão e captura"]
+        client["Web / Mobile"] --> ocr["OCR e interpretação"]
+        client --> media["Cloudinary - binário das imagens"]
+        ocr --> scans[("MongoDB - scan_sessions")]
+        scans --> review["Revisão administrativa"]
+        review --> projection["Projeção aprovada"]
+    end
 
     legacy["Banco legado externo"] --> rpa["venus_rpa - staging e execução"]
 
-    subgraph postgresql["PostgreSQL - Venus"]
-        core[("venus - catálogo operacional")]
-        audit[("venus_audit - auditoria")]
+    subgraph operational["PostgreSQL - fonte operacional"]
+        core[("venus - catálogo, usuários e scoring")]
+        audit[("venus_audit - trilha de auditoria")]
         bi[("venus_bi - views analíticas")]
     end
 
     projection --> core
     rpa --> core
     core --> audit
+    core --> bi
     core --> graph[("Neo4j - grafo derivado")]
     bi --> databricks["Databricks - consumo analítico"]
-    core -. "não evidenciado no repo" .-> redis[("Redis")]
-    core --> bi
     media -. "metadados" .-> core
+    core -. "não evidenciado no repo" .-> redis[("Redis")]
 ```
 
-O PostgreSQL é a fonte operacional depois da aprovação do scan. O MongoDB
-preserva o contexto bruto e o workflow de revisão; o Cloudinary mantém os
-binários; o Neo4j representa uma projeção derivada; e as views `venus_bi` são
-consumidas pelo Databricks. Redis permanece explicitamente como não evidenciado
-neste repositório. Para detalhes, consulte
-[`docs/ARQUITETURA.md`](docs/ARQUITETURA.md).
+### Como os dados atravessam a arquitetura
 
-## Início rápido
+1. A aplicação envia a imagem pelo fluxo de upload assinado; o binário fica no
+   Cloudinary e seus metadados ficam em `venus.media_assets`.
+2. O OCR extrai texto, qualidade e candidatos; o contexto do scan é mantido em
+   `MongoDB.scan_sessions`.
+3. Casos ambíguos passam por revisão administrativa. Somente uma decisão
+   aprovada pode iniciar a projeção relacional.
+4. O PostgreSQL aplica FKs, checks, unicidades e regras de prontidão antes de
+   promover produto, composição e scoring para uso operacional.
+5. O núcleo relacional alimenta auditoria, recomendações, o grafo derivado e as
+   views `venus_bi`.
+6. O Databricks consome a camada analítica. Ele não deve escrever de volta no
+   núcleo operacional.
+
+O desenho usa linhas tracejadas para integrações que são metadados ou ainda não
+possuem implementação comprovada no repositório.
+
+## Estado real do PostgreSQL em QA
+
+Validação executada em transação `READ ONLY` no banco `Venus-qa`, PostgreSQL
+`17.11`, em 26/10/2026:
+
+| Schema | Tabelas físicas | Papel |
+|---|---:|---|
+| `venus` | 59 | Núcleo transacional do catálogo, usuários, scoring e engajamento. |
+| `venus_audit` | 1 | `audit_logs`, histórico de alterações. |
+| `venus_rpa` | 4 | Execuções, staging e erros do legado. |
+| `venus_optimization` | 1 | Ponto de extensão para otimização. |
+| `venus_bi` | 0 | Camada de views analíticas, sem tabelas físicas. |
+| **Total** | **65** | **79 FKs e 51 views/materialized views.** |
+
+O snapshot completo é gerado por [`ops/generate_database_model.py`](ops/generate_database_model.py)
+e documentado em [`docs/database-logical-model.md`](docs/database-logical-model.md).
+O gerador consulta metadados e não cria, altera ou remove objetos no banco.
+
+## O que está implementado
+
+| Tecnologia | Status | Fonte no repositório |
+|---|---|---|
+| PostgreSQL | Implementado e validado em QA. | [`sql/`](sql/) |
+| MongoDB | Contrato e scripts de `scan_sessions`; não executado nesta revisão. | [`mongodb/`](mongodb/) |
+| Neo4j | Carga, constraints, seed e consultas; conector não versionado. | [`neo4j/`](neo4j/) |
+| Redis | Sem código, configuração ou contrato evidenciado. | [`redis/README.md`](redis/README.md) |
+| Cloudinary | Serviço backend e registro SQL de metadados. | [`cloudinary/`](cloudinary/) |
+| Databricks | Consumidor documentado; sem notebooks/jobs no repo. | [`databricks/README.md`](databricks/README.md) |
+
+## Executar localmente
+
+### Pré-requisitos
+
+- Python compatível com [`requirements.txt`](requirements.txt);
+- acesso ao PostgreSQL Venus via `DATABASE_URL`;
+- `LEGACY_DATABASE_URL` e queries do legado somente quando o RPA for executado;
+- credenciais Cloudinary apenas no backend, nunca em payloads do cliente.
+
+### Bootstrap sem RPA
 
 ```bash
 python -m pip install -r requirements.txt
@@ -63,82 +118,63 @@ cp .env.example .env
 python pipeline.py --skip-rpa
 ```
 
-No PowerShell, use `Copy-Item .env.example .env`. Configure `DATABASE_URL`
-antes da execução. Para executar o RPA, configure também `LEGACY_DATABASE_URL`,
-`LEGACY_PRODUCTS_QUERY` e `LEGACY_USERS_QUERY`; o banco legado permanece
-externo e somente leitura.
+No PowerShell:
 
-## O que o pipeline faz
+```powershell
+Copy-Item .env.example .env
+python pipeline.py --skip-rpa
+```
 
-1. cria os schemas controlados do Venus;
-2. aplica `sql/` em ordem e as migrations selecionadas;
-3. carrega referências, ingredientes e dados opcionais;
-4. configura auditoria, RPA, mídia e views BI;
-5. valida o estado do banco.
-
-`--reset` e os modos de reconstrução são destrutivos. Leia
-[`docs/OPERACAO.md`](docs/OPERACAO.md) e [`docs/BACKUP_RECOVERY.md`](docs/BACKUP_RECOVERY.md)
-antes de usá-los.
-
-## Arquitetura SQL
-
-| Camada | Arquivos principais |
-|---|---|
-| Modelo operacional | [`sql/`](sql/) e `sql/migrations/` |
-| Mídia | [`cloudinary/`](cloudinary/) e `cloudinary_service.py` |
-| Dados mestres | `sql/10_reference_seed.sql`, `sql/20_regulation_seed.sql` |
-| Catálogo técnico | `sql/40_data_catalog.sql` |
-| BI | `sql/50_bi.sql` → schema `venus_bi` |
-| RPA | `sql/60_rpa.sql` → schema `venus_rpa` |
-| Validação | `sql/99_validation.sql` e `diagnostico_postgres.py` |
-
-## Estado validado em QA
-
-Em 26/10/2026, uma transação `READ ONLY` no banco `Venus-qa` confirmou:
-
-- PostgreSQL `17.11`;
-- 65 tabelas físicas;
-- 79 relacionamentos por FK;
-- 51 views/materialized views;
-- tabelas nos schemas `venus`, `venus_audit`, `venus_rpa` e
-  `venus_optimization`;
-- `venus_bi` sem tabelas físicas, somente views analíticas.
-
-Para regenerar o snapshot do catálogo:
+### Regenerar a documentação SQL
 
 ```bash
 python ops/generate_database_model.py
 ```
 
-O gerador é somente leitura no banco e atualiza os artefatos em
-`docs/database-logical-model.*`.
+O comando exige `DATABASE_URL`, abre uma sessão somente leitura e atualiza os
+artefatos em `docs/database-logical-model.*`. Não execute `--reset` ou modos de
+reconstrução sem ler [`docs/OPERACAO.md`](docs/OPERACAO.md) e
+[`docs/BACKUP_RECOVERY.md`](docs/BACKUP_RECOVERY.md).
 
 ## Estrutura do repositório
 
 ```text
 Venus-Banco/
-├── sql/                        # PostgreSQL, BI, RPA e migrations
-├── mongodb/                    # contrato e scripts de scan_sessions
-├── neo4j/                      # cargas, constraints e consultas do grafo
-├── redis/                      # status e contrato Redis
+├── sql/                        # PostgreSQL, BI, RPA, seeds e migrations
+├── mongodb/                    # scan_sessions, índices, seed e validação
+├── neo4j/                      # grafo, constraints, cargas e consultas
+├── redis/                      # status da integração Redis
 ├── databricks/                 # contrato de consumo analítico
-├── ocr/                        # fluxo de OCR e projeção
+├── ocr/                        # fluxo OCR e projeção de catálogo
 ├── cloudinary/                 # API, mídia e metadados
-├── pipeline.py                 # bootstrap e orquestração
-├── rpa_migrate.py              # legado externo -> venus_rpa/venus
-├── cloudinary_service.py       # operações backend-only de mídia
-├── data/                       # carga e ETL de ingredientes
+├── data/                       # ETL de ingredientes e fontes externas
 ├── docs/                       # arquitetura transversal e modelos lógicos
-└── ops/                        # backup, restore e geração de documentação
+├── ops/                        # backup, restore e geração do snapshot
+├── pipeline.py                 # bootstrap e orquestração do banco
+├── rpa_migrate.py              # legado externo -> venus_rpa/venus
+└── cloudinary_service.py       # operações backend-only de mídia
 ```
 
-## Variáveis essenciais
+## Configuração essencial
 
-| Variável | Uso |
+| Variável | Finalidade |
 |---|---|
-| `DATABASE_URL` | PostgreSQL do Venus. |
-| `LEGACY_DATABASE_URL` | PostgreSQL legado externo, somente leitura no RPA. |
-| `LEGACY_PRODUCTS_QUERY` / `LEGACY_USERS_QUERY` | Queries de extração do legado. |
-| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` / `CLOUDINARY_API_SECRET` | Upload e gestão de imagens; o segredo fica somente no backend. |
+| `DATABASE_URL` | Conexão do PostgreSQL Venus. |
+| `LEGACY_DATABASE_URL` | Conexão somente leitura do legado para o RPA. |
+| `LEGACY_PRODUCTS_QUERY` / `LEGACY_USERS_QUERY` | Consultas de extração do legado. |
+| `CLOUDINARY_CLOUD_NAME` / `CLOUDINARY_API_KEY` | Upload e gestão de mídia. |
+| `CLOUDINARY_API_SECRET` | Assinaturas backend-only; nunca expor ao cliente. |
 
-Consulte [`.env.example`](.env.example) para a lista completa.
+A lista completa está em [`.env.example`](.env.example). Nunca versionar `.env`,
+tokens, senhas, refresh tokens ou chaves privadas.
+
+## Critérios para alterar o banco
+
+1. Alterar `sql/00_schema.sql` ou criar uma migration idempotente.
+2. Aplicar a mudança em QA e executar as validações estruturais.
+3. Regenerar `docs/database-logical-model.*` pelo gerador somente leitura.
+4. Atualizar os arquivos brModelo em [`docs/modelos lógicos/`](<docs/modelos lógicos/>).
+5. Atualizar o contrato da tecnologia afetada e manter os limites de evidência
+   explícitos.
+
+Para a documentação completa, use [`docs/README.md`](docs/README.md).
