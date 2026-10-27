@@ -48,10 +48,10 @@ flowchart LR
     rpa --> core
     core --> audit
     core --> bi
-    core --> graph[("Neo4j - grafo derivado")]
+    core --> neo4jGraph[("Neo4j - grafo derivado")]
     bi --> databricks["Databricks - consumo analítico"]
-    media -. "metadados" .-> core
-    core -. "não evidenciado no repo" .-> redis[("Redis")]
+    media -.->|metadados| core
+    core -.->|não evidenciado no repo| redis[("Redis")]
 ```
 
 ### Como os dados atravessam a arquitetura
