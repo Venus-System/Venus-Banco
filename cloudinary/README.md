@@ -14,5 +14,6 @@ Fluxo recomendado:
    leituras da aplicação.
 
 O segredo `CLOUDINARY_API_SECRET` nunca deve ir para web/mobile, logs ou
-payloads. O contrato detalhado está em [`../../../CLOUDINARY_API.md`](../../../CLOUDINARY_API.md)
-e o modelo SQL em [`../../../sql/05_cloudinary_images.sql`](../../../sql/05_cloudinary_images.sql).
+payloads. O contrato detalhado está em [`API.md`](API.md), o modelo de dados em
+[`MODELO_DADOS.md`](MODELO_DADOS.md) e o modelo SQL em
+[`../sql/05_cloudinary_images.sql`](../sql/05_cloudinary_images.sql).

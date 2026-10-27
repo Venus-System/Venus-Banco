@@ -3,7 +3,7 @@
 ## Contrato de dados
 
 O repositório implementa a camada analítica em SQL, no schema `venus_bi`. O
-arquivo [`sql/50_bi.sql`](../../../sql/50_bi.sql) cria dimensões, fatos e views
+arquivo [`../sql/50_bi.sql`](../sql/50_bi.sql) cria dimensões, fatos e views
 de KPI/ranking. O PostgreSQL de QA confirmou que não há tabelas físicas em
 `venus_bi`; as estruturas são views derivadas.
 

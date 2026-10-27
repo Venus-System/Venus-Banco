@@ -18,11 +18,11 @@
 - DAU via `venus.user_access_events`, função de registro, triggers e views `v_dau`/`v_dau_rolling_30d`.
 - CTE recursiva para a hierarquia de `ingredient_categories`.
 - `EXPLAIN (ANALYZE, BUFFERS)` em `sql/55_optimization.sql` associado aos índices do modelo.
-- Backup/recovery documentados em `BACKUP_RECOVERY.md` e scripts PowerShell em `ops/`.
-- Cardinalidades explícitas em `MODEL_CARDINALIDADES.md`.
+- Backup/recovery documentados em `docs/BACKUP_RECOVERY.md` e scripts PowerShell em `ops/`.
+- Cardinalidades explícitas em `docs/modelos lógicos/MODEL_CARDINALIDADES.md`.
 
 ## Regra importante do RPA
-O pacote não cria, popula ou simula o banco legado. O usuário fornece a conexão real e as consultas de extração do legado, que retornam os aliases canônicos documentados em `rpa_queries.example.sql`.
+O pacote não cria, popula ou simula o banco legado. O usuário fornece a conexão real e as consultas de extração do legado, que retornam os aliases canônicos documentados em `sql/rpa_queries.example.sql`.
 
 ## Como ler este documento
 

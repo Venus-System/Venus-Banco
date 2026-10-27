@@ -17,11 +17,11 @@
 ## Evidência no repositório
 
 - O contrato de documento e os estados estão em
-  [`mongodb/README.md`](../mongodb/README.md) e `mongodb/validation.js`.
+  [`../mongodb/README.md`](../mongodb/README.md) e `../mongodb/validation.js`.
 - A resolução relacional está representada por migrations como
-  `sql/migrations/20261010_002_ocr_auto_resolution_and_relaxed_gate.sql`.
+  `../sql/migrations/20261010_002_ocr_auto_resolution_and_relaxed_gate.sql`.
 - A análise de pendências e melhorias está em
-  [`../../decisoes/OCR_MELHORIAS_E_CORRECOES.md`](../../decisoes/OCR_MELHORIAS_E_CORRECOES.md).
+  [`../docs/decisoes/OCR_MELHORIAS_E_CORRECOES.md`](../docs/decisoes/OCR_MELHORIAS_E_CORRECOES.md).
 - O banco mantém `product_labels`, `product_ingredients`,
   `product_ingredient_resolution_issues` e `product_composition_receipts` para
   rastreabilidade do caminho OCR → catálogo.

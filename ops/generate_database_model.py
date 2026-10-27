@@ -459,7 +459,7 @@ def generate_markdown(
         "- [Arquitetura dos schemas e guia de leitura](ARQUITETURA.md)",
         "- [Arquitetura de dados por tecnologia](arquitetura-dados/README.md)",
         "- [Operação e validação](OPERACAO.md)",
-        "- [Mapa arquitetural resumido](architecture-overview.mmd)",
+        "- [Mapa arquitetural resumido](arquitetura-dados/architecture-overview.mmd)",
         "- [Modelos visuais editáveis do brModelo](<modelos lógicos/README.md>)",
         "- [Diagrama visual completo — SVG](database-logical-model.svg)",
         "- [Fonte do diagrama — Mermaid](database-logical-model.mmd)",
