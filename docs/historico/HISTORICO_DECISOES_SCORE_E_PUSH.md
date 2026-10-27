@@ -100,14 +100,14 @@ dois lados da comparação.
 - `sql/migrations/20261010_009_indirect_risk_assessments_v1.sql`;
 - `ops/apply_indirect_risk_proxies_v2.py`;
 - `ops/load_official_ingredient_risk_v2.py`;
-- `docs/DECISOES_SCORE_INGREDIENTES.md`.
+- `docs/decisoes/DECISOES_SCORE_INGREDIENTES.md`.
 
 ### Prontidão de produtos
 
 - `sql/migrations/20261010_001_score_data_readiness_guardrails.sql`;
 - `sql/migrations/20261010_002_ocr_auto_resolution_and_relaxed_gate.sql`;
 - `sql/migrations/20261012_002_promote_complete_assessments.sql`;
-- `docs/DECISOES_SCORE_PRODUTOS_E_CLASSIFICACAO.md`.
+- `docs/decisoes/DECISOES_SCORE_PRODUTOS_E_CLASSIFICACAO.md`.
 
 ### Busca sem acento
 

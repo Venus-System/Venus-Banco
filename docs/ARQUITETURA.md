@@ -1,214 +1,120 @@
-# Venus-Banco — arquitetura e modelos lógicos
+# Arquitetura de dados do Venus
 
-Este documento explica como o banco está organizado e qual arquivo deve ser
-usado para cada tipo de leitura. Os modelos visuais editáveis em brModelo são
-as fontes de apresentação da arquitetura; os snapshots gerados do PostgreSQL
-servem para conferir o desenho contra o banco implantado em QA.
+Este é o documento canônico da arquitetura ponta a ponta. Ele explica como uma
+imagem chega ao catálogo, onde cada estado é persistido, como o PostgreSQL
+aplica as regras operacionais e como a camada analítica é consumida.
 
-## Visão geral
+Para navegação por tecnologia, use [`arquitetura-dados/README.md`](arquitetura-dados/README.md).
+Para a relação completa de campos, tipos, constraints e FKs, use o
+[`snapshot físico do PostgreSQL`](database-logical-model.md).
+
+## Fluxo ponta a ponta
 
 ```text
-Banco legado externo (somente leitura)
-                 │
-                 ▼
-        rpa_migrate.py / venus_rpa
-                 │  staging, execução e erros
-                 ▼
-             venus
-      núcleo operacional do produto
-          │                 │
-          │                 └── triggers de auditoria ──► venus_audit
-          │
-          └── views analíticas ──► venus_bi
+Web / Mobile
+    │
+    ├── imagem ───────────────────────────────► Cloudinary
+    │                                             │ binário
+    │                                             ▼
+    │                                      venus.media_assets
+    │
+    └── solicitação OCR ─► OCR / interpretação
+                              │
+                              ▼
+                    MongoDB.scan_sessions
+                              │
+                              ▼
+                    revisão administrativa
+                              │ aprovação + idempotency_key
+                              ▼
+                    projeção para PostgreSQL
+                              │
+Legado externo ─► venus_rpa ──┴──► venus
+                                  │  catálogo, usuários,
+                                  │  composição e scoring
+                                  ├──► venus_audit
+                                  ├──► Neo4j (projeção de grafo)
+                                  └──► venus_bi (views)
+                                                │
+                                                ▼
+                                      Databricks / analytics
 ```
 
-O pacote também mantém `venus_optimization.readme` como ponto de extensão para
-objetos de otimização. Ele não possui relacionamento operacional com as demais
-tabelas.
+## Responsabilidade por camada
 
-## Schemas do banco
+| Camada | Fonte de verdade / responsabilidade | Status no repositório |
+|---|---|---|
+| Aplicação | Captura imagem, inicia OCR e apresenta resultados. | Interface descrita; código da aplicação não está neste repo. |
+| OCR | Extrai texto, qualidade, candidatos e interpretação. | Contrato documentado; worker não está neste repo. |
+| Cloudinary | Binário das imagens. | Contrato e SQL de metadados implementados. |
+| MongoDB | Documento do scan, revisão e sincronização. | Scripts fornecidos incorporados em `arquitetura-dados/mongodb`. |
+| PostgreSQL | Catálogo operacional, integridade, auditoria, RPA e BI. | Implementado e validado em QA. |
+| Neo4j | Grafo derivado para compatibilidade e ordem de uso. | Scripts fornecidos; conector não está neste repo. |
+| Redis | Cache/fila, se adotado. | Nenhuma implementação evidenciada. |
+| Databricks | Consumo analítico das views. | Contrato descrito; notebooks/jobs não estão neste repo. |
 
-### `venus`
+## PostgreSQL real validado
 
-É o núcleo transacional. Contém o catálogo de produtos e ingredientes, perfis
-de usuários, preferências, avaliações, regras de compatibilidade, scores,
-recomendações, listas e reviews.
+A validação foi feita em 26/10/2026 com conexão `READ ONLY` ao banco `Venus-qa`
+(PostgreSQL `17.11`). O catálogo confirmou:
 
-Principais grupos:
+| Schema | Tabelas físicas | Papel |
+|---|---:|---|
+| `venus` | 59 | Núcleo transacional: usuários, produtos, ingredientes, scoring e engajamento. |
+| `venus_audit` | 1 | `audit_logs`, histórico de alterações sem FK para o núcleo. |
+| `venus_rpa` | 4 | Execuções, staging e erros do legado externo. |
+| `venus_optimization` | 1 | `readme`, ponto de extensão para otimização. |
+| `venus_bi` | 0 | Views analíticas, sem tabelas físicas. |
+| **Total** | **65** | **79 FKs e 51 views/materialized views** |
 
-- Identidade e perfil: `users`, `user_profiles`, `user_preferences`,
-  `profile_tags`, `user_profile_tags`, `user_allergies`, `allergies`.
-- Catálogo de produtos: `brands`, `products`, `product_categories`,
-  `product_versions`, `product_labels`, `packaging`, `media_assets`, `claims`.
-- Ingredientes e regulação: `ingredients`, `ingredient_aliases`,
-  `ingredient_categories`, `ingredient_effects`, `ingredient_properties`,
-  `ingredient_regulations`, `regulations`.
-- Avaliação e scoring: `scoring_models`, `score_categories`,
-  `scoring_model_categories`, `compatibility_rules`, `analysis_results`,
-  `product_scores`, `personalized_scores`, `recommendations`.
-- Engajamento: `favorites`, `user_lists`, `user_list_items`, `reviews`,
-  `review_votes`, `reports`, `user_access_events` e `user_tracking_events`.
+O inventário completo das 65 tabelas, na ordem do catálogo, está em
+[`database-logical-model.md`](database-logical-model.md). O diagrama editável
+está em [`modelos lógicos/`](<modelos lógicos/>).
 
-### `venus_audit`
+## Ciclo do OCR até o catálogo
 
-Mantém o histórico de alterações em `audit_logs`. O schema é separado do núcleo
-para facilitar retenção, backup e governança. A tabela não possui FKs para o
-núcleo de propósito: o log deve continuar registrando a alteração mesmo quando
-o registro de origem for removido ou alterado.
+1. A imagem é enviada para o armazenamento externo e seus metadados são
+   registrados.
+2. O OCR grava texto bruto e campos extraídos no documento `scan_sessions`.
+3. O resolvedor usa produto, marca, categoria, claims, INCI e aliases para
+   gerar candidatos.
+4. Casos ambíguos permanecem em revisão; nenhum candidato incerto deve ser
+   promovido automaticamente.
+5. A projeção aprovada leva composição, status, referências e chave idempotente
+   para o PostgreSQL.
+6. O PostgreSQL aplica FKs, checks, unicidades e regras de prontidão das
+   migrations antes da versão ser considerada utilizável.
+7. A composição alimenta efeitos, compatibilidade, análises, scores e
+   recomendações.
+8. `venus_bi` publica dimensões, fatos, KPIs e rankings para consumo analítico.
 
-### `venus_rpa`
+Detalhes da fronteira OCR estão em [`arquitetura-dados/ocr/`](<arquitetura-dados/ocr/>).
 
-É a camada de integração com o legado externo. `rpa_run` representa uma
-execução; `rpa_stage_product` e `rpa_stage_user` recebem os dados intermediários;
-`rpa_error` registra falhas. Os campos `loaded_product_id` e `loaded_user_id`
-ligam o staging ao registro carregado em `venus`, mas aceitam NULL quando a
-carga ainda não foi concluída.
+## RPA do legado
 
-### `venus_bi`
+O legado é externo e somente leitura. `rpa_migrate.py` extrai usando as queries
+configuradas, grava a execução em `venus_rpa.rpa_run`, mantém staging em
+`rpa_stage_product`/`rpa_stage_user`, registra falhas em `rpa_error` e só então
+carrega os registros válidos em `venus`.
 
-Não possui tabelas físicas. É uma camada derivada composta por dimensões,
-fatos e views analíticas criadas em `sql/50_bi.sql`. Portanto, não aparece como
-cartões de tabelas nos modelos brM3 físicos; deve ser consultada como camada de
-leitura e relatórios.
+O pacote não cria nem simula o banco legado. A documentação SQL e as tabelas de
+staging estão em [`arquitetura-dados/sql/README.md`](<arquitetura-dados/sql/README.md>).
 
-### `venus_optimization`
+## BI e Databricks
 
-Possui atualmente apenas a tabela `readme`, usada como espaço reservado para
-estruturas futuras de otimização.
+`sql/50_bi.sql` cria a camada `venus_bi` com dimensões, fatos, visões de
+overview, KPIs, rankings e análises temporais. O PostgreSQL é o produtor; o
+Databricks é consumidor analítico e não deve escrever de volta na camada
+operacional.
 
-## Inventário completo de tabelas
+Não há notebooks ou jobs Databricks versionados neste repositório. O contrato e
+os limites estão em [`arquitetura-dados/databricks/README.md`](<arquitetura-dados/databricks/README.md>).
 
-O inventário abaixo representa todas as tabelas físicas encontradas no banco
-de QA na geração deste documento. O detalhamento de campos, tipos, PKs, UQs,
-FKs, defaults e nulabilidade está em
-[`database-logical-model.md`](database-logical-model.md).
+## Manutenção
 
-### `venus` — 59 tabelas
-
-`admin_users`, `allergies`, `allergy_ingredients`, `analysis_results`,
-`brand_claim_evidence`, `brands`, `claims`, `compatibility_rules`,
-`data_catalog`, `data_catalog_rules`, `favorites`, `google_oauth_tokens`,
-`ingredient_aliases`, `ingredient_categories`,
-`ingredient_category_assignments`, `ingredient_effect_validation_audit`,
-`ingredient_effects`, `ingredient_evidence_queue`, `ingredient_properties`,
-`ingredient_regulations`, `ingredient_resolution_keys`,
-`ingredient_risk_assessments`, `ingredient_risk_methodologies`,
-`ingredient_risk_methodology_dimensions`, `ingredients`, `media_assets`,
-`packaging`, `packaging_evaluation_policies`, `personalized_scores`,
-`product_categories`, `product_claims`, `product_composition_receipts`,
-`product_dimension_assessments`, `product_ingredient_resolution_issues`,
-`product_ingredients`, `product_labels`, `product_score_history`,
-`product_scores`, `product_versions`, `products`, `profile_tags`,
-`recommendations`, `regulations`, `reports`, `review_votes`, `reviews`,
-`rule_evaluations`, `score_categories`, `scoring_model_categories`,
-`scoring_models`, `user_access_events`, `user_allergies`,
-`user_list_items`, `user_lists`, `user_preferences`, `user_profile_tags`,
-`user_profiles`, `user_tracking_events` e `users`.
-
-### `venus_audit` — 1 tabela
-
-`audit_logs`.
-
-### `venus_rpa` — 4 tabelas
-
-`rpa_error`, `rpa_run`, `rpa_stage_product` e `rpa_stage_user`.
-
-### `venus_optimization` — 1 tabela
-
-`readme`.
-
-Total: **65 tabelas físicas**.
-
-## Relacionamentos da arquitetura
-
-O banco possui **79 relacionamentos por FK**. No núcleo `venus`, as relações
-seguem principalmente estes eixos:
-
-- `users` centraliza perfil, preferências, autenticação OAuth, favoritos,
-  listas, reviews, avaliações, recomendações, relatórios e eventos de acesso/
-  rastreamento.
-- `products` referencia marcas e categorias e possui versões em
-  `product_versions`; a versão concentra composição, rótulos, embalagem,
-  mídia, avaliações, scores, recomendações e reviews.
-- `ingredients` referencia categorias e se relaciona com aliases, efeitos,
-  propriedades, regulamentações, chaves de resolução, avaliações de risco,
-  alergias e composição de produtos.
-- `scoring_models` se relaciona com categorias de score, scores de produto,
-  scores personalizados, resultados de análise e regras de compatibilidade.
-- `user_allergies`, `user_profile_tags`, `scoring_model_categories`,
-  `product_ingredients`, `product_claims`, `ingredient_regulations` e outras
-  tabelas de associação materializam relações N:N.
-- `venus_rpa` é uma fronteira de ingestão: `rpa_run` organiza a execução,
-  `rpa_stage_product` e `rpa_stage_user` armazenam staging e `rpa_error`
-  registra falhas. Os IDs `loaded_product_id` e `loaded_user_id` apontam para
-  registros carregados em `venus` quando a carga termina.
-- `venus_audit.audit_logs` não possui FK intencionalmente; registra o schema,
-  tabela e dados alterados sem depender da permanência do registro de origem.
-
-Para a lista exata de cada FK, origem, destino, nulabilidade e cardinalidade
-derivada (`1:1`, `1:N` ou associação `N:N`), consulte a seção
-[`Relacionamentos físicos`](database-logical-model.md#relacionamentos-físicos)
-do snapshot gerado.
-
-## Fontes dos modelos
-
-### Mapa arquitetural resumido
-
-Para uma visão que renderiza bem sem abrir o ERD completo, use
-[`architecture-overview.mmd`](architecture-overview.mmd). Ele mostra o fluxo
-entre legado, RPA, núcleo transacional, auditoria e BI sem tentar exibir todas
-as colunas de `venus` em uma única imagem.
-
-### Modelos visuais editáveis — brModelo
-
-Os arquivos abaixo substituem o modelo visual antigo e devem ser abertos no
-brModelo 3.2:
-
-- [`Schema-Venus-Logico.brM3`](<modelos lógicos/Schema-Venus-Logico.brM3>): modelo completo do núcleo `venus`.
-- [`Schema-Venus_Audit-Logico.brM3`](<modelos lógicos/Schema-Venus_Audit-Logico.brM3>): auditoria.
-- [`Schema-Venus_RPA-Logico.brM3`](<modelos lógicos/Schema-Venus_RPA-Logico.brM3>): integração RPA e staging.
-
-As capturas em [`modelos lógicos/previews`](<modelos lógicos/previews>) são apenas
-pré-visualizações para navegação no repositório. A captura de `venus` é
-intencionalmente densa porque representa todas as tabelas do núcleo; para ler
-campos e relacionamentos, abra o `.brM3` no brModelo ou use os artefatos
-gerados abaixo.
-
-### Snapshot conferido contra o PostgreSQL de QA
-
-- [`database-logical-model.md`](database-logical-model.md): catálogo completo
-  de tabelas, campos, tipos, constraints, FKs, enums e views.
-- [`database-logical-model.mmd`](database-logical-model.mmd): diagrama Mermaid
-  gerado dos metadados físicos.
-- [`database-logical-model.svg`](database-logical-model.svg): diagrama SVG
-  zoomável de todas as tabelas físicas.
-- [`database-logical-model.sql`](database-logical-model.sql): snapshot lógico
-  SQL, sem executar alterações no banco.
-- [`../MODEL_CARDINALIDADES.md`](../MODEL_CARDINALIDADES.md): resumo das
-  cardinalidades e tabelas associativas.
-
-O snapshot é regenerado por `python ops/generate_database_model.py` e não
-substitui os arquivos brM3 como desenho editável. Ele existe para detectar
-divergências entre o desenho apresentado e o banco implantado.
-
-## Arquivos que implementam a arquitetura
-
-- `sql/00_schema.sql`: schemas, tipos, tabelas, FKs, índices, funções e
-  auditoria inicial.
-- `sql/05_cloudinary_images.sql`: metadados de mídia e views relacionadas.
-- `sql/40_data_catalog.sql`: catálogo técnico de tabelas e colunas.
-- `sql/50_bi.sql`: camada de views analíticas em `venus_bi`.
-- `sql/60_rpa.sql`: estruturas de execução e staging em `venus_rpa`.
-- `sql/migrations/`: alterações incrementais posteriores ao schema inicial.
-- `pipeline.py`: bootstrap, aplicação ordenada dos SQLs e validações.
-- `rpa_migrate.py`: extração do legado e carga do staging/`venus`.
-- `ops/generate_database_model.py`: documentação somente leitura do banco.
-
-## Regras de manutenção
-
-1. Alterações estruturais devem ser feitas no schema SQL ou em uma migration.
-2. Depois da migration, atualizar o desenho brM3 correspondente.
-3. Regenerar os snapshots com `python ops/generate_database_model.py`.
-4. Conferir `MODEL_CARDINALIDADES.md` quando uma FK, UQ ou tabela associativa
-   for alterada.
-5. Não colocar credenciais, dumps de dados ou binários de mídia no repositório.
+- SQL/migrations definem o contrato executável.
+- `ops/generate_database_model.py` documenta o catálogo real sem alterá-lo.
+- Alterações de tabelas exigem atualizar o brModelo em `modelos lógicos/`.
+- Alterações de fluxo exigem atualizar este arquivo e o README da tecnologia.
+- Qualquer tecnologia sem código/configuração deve continuar marcada como não
+  evidenciada.

@@ -8,7 +8,7 @@
 </defs>
 <rect width="100%" height="100%" fill="#ffffff"/>
 <text x="90" y="48" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="26px" font-weight="500" fill="#172b4d">Venus — modelo lógico do banco</text>
-<text x="90" y="76" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13px" font-weight="400" fill="#52606d">Fonte: Venus-qa · 65 tabelas · 79 FKs · gerado em 2026-10-26 21:38:52 -0300</text>
+<text x="90" y="76" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="13px" font-weight="400" fill="#52606d">Fonte: Venus-qa · 65 tabelas · 79 FKs · gerado em 2026-10-26 22:03:17 -0300</text>
 <text x="90" y="100" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="12px" font-weight="400" fill="#52606d">Cada linha sai da coluna FK e chega à coluna PK/UQ correspondente. PK = primária · UQ = única · FK = estrangeira · NN = NOT NULL · NULL = opcional</text>
 <path d="M 550 1571.0 H 880 V 950.0 H 1310" fill="none" stroke="#1f2937" stroke-width="2" stroke-linejoin="round" marker-start="url(#one-bar)" marker-end="url(#many-foot)"><title>allergy_ingredients_fk_allergy_id_fkey: venus.allergy_ingredients.fk_allergy_id -&gt; venus.allergies.allergy_id; child 1..1 -&gt; parent 1..1; parent -&gt; child 0..N; ON DELETE CASCADE; ON UPDATE NO ACTION</title></path>
 <path d="M 1160 181.0 H 1185 V 970.0 H 1310" fill="none" stroke="#1f2937" stroke-width="2" stroke-linejoin="round" marker-start="url(#one-bar)" marker-end="url(#many-foot)"><title>allergy_ingredients_fk_ingredient_id_fkey: venus.allergy_ingredients.fk_ingredient_id -&gt; venus.ingredients.ingredient_id; child 1..1 -&gt; parent 1..1; parent -&gt; child 0..N; ON DELETE CASCADE; ON UPDATE NO ACTION</title></path>

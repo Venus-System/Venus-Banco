@@ -28,7 +28,8 @@ O pacote não cria, popula ou simula o banco legado. O usuário fornece a conex�
 
 Esta auditoria resume decisões de escopo tomadas ao consolidar os scripts históricos do Venus em um único pacote reproduzível. Ela deve ser lida junto com:
 
-- `PACKAGE_CHANGELOG_V7.md`, para o histórico cronológico de mudanças por versão;
+- `docs/historico/HISTORICO_DECISOES_SCORE_E_PUSH.md`, para o contexto histórico
+  das decisões de score;
 - `README.md`, para a arquitetura canônica resultante dessas decisões;
 - `data/ETL_INGREDIENTES/README.md`, para o detalhamento da decisão de limpeza aplicada aos ingredientes.
 
