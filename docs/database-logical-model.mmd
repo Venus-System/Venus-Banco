@@ -45,6 +45,18 @@ erDiagram
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
+    venus__brand_claim_evidence {
+        BIGINT brand_claim_evidence_id PK
+        BIGINT fk_brand_id UK FK
+        TEXT claim_type UK
+        BOOLEAN claim_value
+        TEXT source_url UK
+        TEXT source_title
+        TEXT evidence_note
+        TEXT evidence_level
+        TIMESTAMP verified_at
+        TEXT methodology_version
+    }
     venus__brands {
         BIGINT brand_id PK
         TEXT name UK
@@ -171,6 +183,20 @@ erDiagram
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
+    venus__ingredient_effect_validation_audit {
+        BIGINT audit_id PK
+        BIGINT ingredient_effect_id
+        BIGINT fk_ingredient_id FK
+        TEXT from_effect_category
+        TEXT to_effect_category
+        TEXT from_review_status
+        TEXT to_review_status
+        TEXT evidence_level
+        TEXT source_reference
+        TEXT decision
+        TEXT methodology_version
+        TIMESTAMP applied_at
+    }
     venus__ingredient_effects {
         BIGINT ingredient_effect_id PK
         BIGINT fk_ingredient_id UK FK
@@ -183,6 +209,17 @@ erDiagram
         VENUS_REVIEW_STATUS_ENUM review_status
         VENUS_SOURCE_TYPE_ENUM source_type
         TEXT source_reference
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__ingredient_evidence_queue {
+        BIGINT ingredient_evidence_queue_id PK
+        BIGINT fk_ingredient_id UK FK
+        SMALLINT priority
+        BOOLEAN is_currently_used
+        TEXT queue_status
+        VENUS_EVIDENCE_LEVEL_ENUM target_evidence_level
+        TEXT reason
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
@@ -267,6 +304,7 @@ erDiagram
         TEXT source_reference
         TIMESTAMP created_at
         TIMESTAMP updated_at
+        TEXT scientific_confidence_state
     }
     venus__media_assets {
         BIGINT media_asset_id PK
@@ -307,6 +345,16 @@ erDiagram
         VENUS_SOURCE_TYPE_ENUM source_type
         TEXT source_reference
         BOOLEAN was_manual_verified
+        TIMESTAMP created_at
+        TIMESTAMP updated_at
+    }
+    venus__packaging_evaluation_policies {
+        TEXT policy_version PK
+        TEXT status
+        TEXT missing_packaging_policy
+        TEXT unverified_packaging_policy
+        JSONB source_hierarchy
+        DATE effective_from
         TIMESTAMP created_at
         TIMESTAMP updated_at
     }
@@ -632,6 +680,22 @@ erDiagram
         VENUS_HAIR_PATTERN_ENUM hair_pattern
         BOOLEAN is_breastfeeding
     }
+    venus__user_tracking_events {
+        BIGINT tracking_event_id PK
+        BIGINT fk_user_id FK
+        TEXT user_external_id
+        TEXT anonymous_id
+        TEXT platform
+        TEXT event_name
+        TEXT session_id
+        TEXT screen_name
+        TEXT app_version
+        TEXT device_os
+        TEXT device_id_hash
+        TIMESTAMP occurred_at
+        JSONB metadata
+        TIMESTAMP created_at
+    }
     venus__users {
         BIGINT user_id PK
         TEXT firebase_uid UK
@@ -715,6 +779,7 @@ erDiagram
     venus__product_versions ||--|{ venus__analysis_results : "analysis_results_fk_product_version_id_fkey: fk_product_version_id -> product_version_id"
     venus__scoring_models ||--|{ venus__analysis_results : "analysis_results_fk_scoring_model_id_fkey: fk_scoring_model_id -> scoring_model_id"
     venus__users ||--|{ venus__analysis_results : "analysis_results_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__brands ||--|{ venus__brand_claim_evidence : "brand_claim_evidence_fk_brand_id_fkey: fk_brand_id -> brand_id"
     venus__ingredient_effects ||--|{ venus__compatibility_rules : "compatibility_rules_fk_ingredient_effect_id_fkey: fk_ingredient_effect_id -> ingredient_effect_id"
     venus__scoring_models ||--|{ venus__compatibility_rules : "compatibility_rules_fk_scoring_model_id_fkey: fk_scoring_model_id -> scoring_model_id"
     venus__products ||--|{ venus__favorites : "favorites_fk_product_id_fkey: fk_product_id -> product_id"
@@ -724,8 +789,10 @@ erDiagram
     venus__ingredient_categories ||--o{ venus__ingredient_categories : "ingredient_categories_parent_ingredient_category_id_fkey: parent_ingredient_category_id -> ingredient_category_id"
     venus__ingredient_categories ||--|{ venus__ingredient_category_assignments : "ingredient_category_assignments_fk_ingredient_category_id_fkey: fk_ingredient_category_id -> ingredient_category_id"
     venus__ingredients ||--|{ venus__ingredient_category_assignments : "ingredient_category_assignments_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
+    venus__ingredients ||--|{ venus__ingredient_effect_validation_audit : "ingredient_effect_validation_audit_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
     venus__ingredients ||--|{ venus__ingredient_effects : "ingredient_effects_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
     venus__profile_tags ||--|{ venus__ingredient_effects : "ingredient_effects_fk_profile_tag_id_fkey: fk_profile_tag_id -> profile_tag_id"
+    venus__ingredients ||--o| venus__ingredient_evidence_queue : "ingredient_evidence_queue_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
     venus__ingredients ||--|{ venus__ingredient_properties : "ingredient_properties_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
     venus__ingredients ||--|{ venus__ingredient_regulations : "ingredient_regulations_fk_ingredient_id_fkey: fk_ingredient_id -> ingredient_id"
     venus__regulations ||--|{ venus__ingredient_regulations : "ingredient_regulations_fk_regulation_id_fkey: fk_regulation_id -> regulation_id"
@@ -780,6 +847,7 @@ erDiagram
     venus__profile_tags ||--|{ venus__user_profile_tags : "user_profile_tags_fk_profile_tag_id_fkey: fk_profile_tag_id -> profile_tag_id"
     venus__users ||--|{ venus__user_profile_tags : "user_profile_tags_fk_user_id_fkey: fk_user_id -> user_id"
     venus__users ||--o| venus__user_profiles : "user_profiles_fk_user_id_fkey: fk_user_id -> user_id"
+    venus__users ||--o{ venus__user_tracking_events : "user_tracking_events_fk_user_id_fkey: fk_user_id -> user_id"
     venus_rpa__rpa_run ||--|{ venus_rpa__rpa_error : "rpa_error_batch_id_fkey: batch_id -> batch_id"
     venus_rpa__rpa_run ||--|{ venus_rpa__rpa_stage_product : "rpa_stage_product_batch_id_fkey: batch_id -> batch_id"
     venus__products ||--o{ venus_rpa__rpa_stage_product : "rpa_stage_product_loaded_product_id_fkey: loaded_product_id -> product_id"

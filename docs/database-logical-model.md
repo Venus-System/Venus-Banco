@@ -1,17 +1,20 @@
-# Venus — Modelo lógico do banco
+# Venus — Snapshot físico do banco
 
-> Snapshot gerado a partir dos metadados do PostgreSQL implantado. A fonte desta versão é o catálogo do banco, não uma inferência a partir dos nomes dos campos.
+> Snapshot gerado a partir dos metadados do PostgreSQL implantado. A fonte desta versão é o catálogo do banco, não uma inferência a partir dos nomes dos campos. O desenho visual editável está em [`docs/modelos lógicos/`](<modelos lógicos/>); este arquivo é a conferência técnica do modelo implantado.
 
 - Banco: `Venus-qa`
-- Gerado em: `2026-10-10 23:22:21 -0300`
+- Gerado em: `2026-10-26 21:38:52 -0300`
 - Schemas de tabelas: `venus, venus_audit, venus_rpa, venus_optimization`
-- Tabelas físicas: **60**
-- Relacionamentos FK: **75**
+- Tabelas físicas: **65**
+- Relacionamentos FK: **79**
 - Tipos enum: **31**
-- Views/materialized views inventariadas: **46**
+- Views/materialized views inventariadas: **51**
 
 ## Artefatos
 
+- [Arquitetura dos schemas e guia de leitura](ARQUITETURA.md)
+- [Mapa arquitetural resumido](architecture-overview.mmd)
+- [Modelos visuais editáveis do brModelo](<modelos lógicos/README.md>)
 - [Diagrama visual completo — SVG](database-logical-model.svg)
 - [Fonte do diagrama — Mermaid](database-logical-model.mmd)
 - [Snapshot lógico SQL](database-logical-model.sql)
@@ -30,6 +33,7 @@ As views `venus_bi` são derivadas e não possuem armazenamento relacional indep
 | `venus` | `allergies` | 6 | 1 | 0 | — |
 | `venus` | `allergy_ingredients` | 7 | 1 | 2 | Relação explícita entre alergias e ingredientes INCI para compatibilidade de usuários com fórmulas. |
 | `venus` | `analysis_results` | 16 | 1 | 3 | — |
+| `venus` | `brand_claim_evidence` | 10 | 1 | 1 | — |
 | `venus` | `brands` | 9 | 1 | 0 | — |
 | `venus` | `claims` | 6 | 1 | 0 | — |
 | `venus` | `compatibility_rules` | 17 | 1 | 2 | — |
@@ -40,16 +44,19 @@ As views `venus_bi` são derivadas e não possuem armazenamento relacional indep
 | `venus` | `ingredient_aliases` | 8 | 1 | 1 | — |
 | `venus` | `ingredient_categories` | 6 | 1 | 1 | — |
 | `venus` | `ingredient_category_assignments` | 8 | 1 | 2 | — |
+| `venus` | `ingredient_effect_validation_audit` | 12 | 1 | 1 | — |
 | `venus` | `ingredient_effects` | 13 | 1 | 2 | — |
+| `venus` | `ingredient_evidence_queue` | 9 | 1 | 1 | Fila de curadoria para substituir assessments indiretos v1/low e confidence default por evidência específica. |
 | `venus` | `ingredient_properties` | 9 | 1 | 1 | — |
 | `venus` | `ingredient_regulations` | 11 | 1 | 2 | — |
 | `venus` | `ingredient_resolution_keys` | 3 | 2 | 1 | — |
 | `venus` | `ingredient_risk_assessments` | 14 | 1 | 1 | Avaliações aprovadas dos quatro eixos de risco; zero só é evidência quando existir registro aprovado. |
 | `venus` | `ingredient_risk_methodologies` | 9 | 1 | 0 | Versões auditáveis das regras que convertem evidência em scores 0–10. |
 | `venus` | `ingredient_risk_methodology_dimensions` | 6 | 2 | 1 | Definição, evidência mínima e âncoras por eixo da metodologia ativa. |
-| `venus` | `ingredients` | 16 | 1 | 1 | — |
+| `venus` | `ingredients` | 17 | 1 | 1 | — |
 | `venus` | `media_assets` | 23 | 1 | 3 | Canonical registry of Cloudinary media assets. Binary content is stored outside PostgreSQL. |
 | `venus` | `packaging` | 15 | 1 | 1 | — |
+| `venus` | `packaging_evaluation_policies` | 8 | 1 | 0 | — |
 | `venus` | `personalized_scores` | 12 | 1 | 4 | — |
 | `venus` | `product_categories` | 5 | 1 | 0 | — |
 | `venus` | `product_claims` | 10 | 1 | 2 | — |
@@ -79,6 +86,7 @@ As views `venus_bi` são derivadas e não possuem armazenamento relacional indep
 | `venus` | `user_preferences` | 11 | 1 | 1 | — |
 | `venus` | `user_profile_tags` | 6 | 1 | 2 | — |
 | `venus` | `user_profiles` | 19 | 1 | 1 | — |
+| `venus` | `user_tracking_events` | 14 | 1 | 1 | — |
 | `venus` | `users` | 9 | 1 | 0 | — |
 | `venus_audit` | `audit_logs` | 9 | 1 | 0 | — |
 | `venus_rpa` | `rpa_error` | 8 | 1 | 1 | — |
@@ -199,6 +207,40 @@ Relação explícita entre alergias e ingredientes INCI para compatibilidade de 
 | `analysis_results_fk_user_id_fkey` | `FK` | `FOREIGN KEY (fk_user_id) REFERENCES venus.users(user_id) ON DELETE CASCADE` |
 | `analysis_results_pkey` | `PK` | `PRIMARY KEY (analysis_result_id)` |
 
+### `venus.brand_claim_evidence`
+
+| # | Campo | Tipo | Aceita NULL? | Default | Papel | Descrição |
+|---:|---|---|:---:|---|---|---|
+| 1 | `brand_claim_evidence_id` | `bigint` | não | `nextval('venus.brand_claim_evidence_brand_claim_evidence_id_seq'::regclass)` | PK | — |
+| 2 | `fk_brand_id` | `bigint` | não | `—` | UQ, FK | — |
+| 3 | `claim_type` | `text` | não | `—` | UQ | — |
+| 4 | `claim_value` | `boolean` | não | `true` | — | — |
+| 5 | `source_url` | `text` | não | `—` | UQ | — |
+| 6 | `source_title` | `text` | não | `—` | — | — |
+| 7 | `evidence_note` | `text` | não | `—` | — | — |
+| 8 | `evidence_level` | `text` | não | `—` | — | — |
+| 9 | `verified_at` | `timestamp with time zone` | não | `now()` | — | — |
+| 10 | `methodology_version` | `text` | não | `'v1'::text` | — | — |
+
+**Constraints**
+
+| Nome | Tipo | Definição |
+|---|---|---|
+| `brand_claim_evidence_claim_type_check` | `CHECK` | `CHECK (claim_type = ANY (ARRAY['vegan'::text, 'cruelty_free'::text, 'brazilian'::text]))` |
+| `brand_claim_evidence_evidence_level_check` | `CHECK` | `CHECK (evidence_level = ANY (ARRAY['high'::text, 'medium'::text, 'low'::text]))` |
+| `brand_claim_evidence_note_nonblank` | `CHECK` | `CHECK (btrim(evidence_note) <> ''::text)` |
+| `brand_claim_evidence_source_title_nonblank` | `CHECK` | `CHECK (btrim(source_title) <> ''::text)` |
+| `brand_claim_evidence_source_url_nonblank` | `CHECK` | `CHECK (btrim(source_url) <> ''::text)` |
+| `brand_claim_evidence_fk_brand_id_fkey` | `FK` | `FOREIGN KEY (fk_brand_id) REFERENCES venus.brands(brand_id) ON DELETE CASCADE` |
+| `brand_claim_evidence_pkey` | `PK` | `PRIMARY KEY (brand_claim_evidence_id)` |
+| `brand_claim_evidence_fk_brand_id_claim_type_source_url_key` | `UQ` | `UNIQUE (fk_brand_id, claim_type, source_url)` |
+
+**Índices únicos**
+
+| Nome | Definição |
+|---|---|
+| `brand_claim_evidence_fk_brand_id_claim_type_source_url_key` | `CREATE UNIQUE INDEX brand_claim_evidence_fk_brand_id_claim_type_source_url_key ON venus.brand_claim_evidence USING btree (fk_brand_id, claim_type, source_url)` |
+
 ### `venus.brands`
 
 | # | Campo | Tipo | Aceita NULL? | Default | Papel | Descrição |
@@ -207,8 +249,8 @@ Relação explícita entre alergias e ingredientes INCI para compatibilidade de 
 | 2 | `name` | `text` | não | `—` | UQ | — |
 | 3 | `country` | `text` | sim | `—` | UQ | — |
 | 4 | `website` | `text` | sim | `—` | — | — |
-| 5 | `has_cruelty_free_claim` | `boolean` | sim | `NULL` | — | `TRUE/FALSE somente com evidência elegível; NULL = desconhecido` |
-| 6 | `has_vegan_claim` | `boolean` | sim | `NULL` | — | `TRUE/FALSE somente com evidência elegível; NULL = desconhecido` |
+| 5 | `has_cruelty_free_claim` | `boolean` | sim | `—` | — | TRUE/FALSE somente quando houver evidência elegível; NULL significa desconhecido. |
+| 6 | `has_vegan_claim` | `boolean` | sim | `—` | — | TRUE/FALSE somente quando houver evidência elegível; NULL significa desconhecido. |
 | 7 | `is_brazilian` | `boolean` | não | `false` | — | — |
 | 8 | `created_at` | `timestamp with time zone` | não | `now()` | — | — |
 | 9 | `updated_at` | `timestamp with time zone` | não | `now()` | — | — |
@@ -225,6 +267,7 @@ Relação explícita entre alergias e ingredientes INCI para compatibilidade de 
 | Nome | Definição |
 |---|---|
 | `brands_name_country_key` | `CREATE UNIQUE INDEX brands_name_country_key ON venus.brands USING btree (name, country)` |
+| `uq_brands_name_normalized` | `CREATE UNIQUE INDEX uq_brands_name_normalized ON venus.brands USING btree (lower(btrim(name)))` |
 
 ### `venus.claims`
 
@@ -501,6 +544,30 @@ Relação explícita entre alergias e ingredientes INCI para compatibilidade de 
 |---|---|
 | `ingredient_category_assignmen_fk_ingredient_id_fk_ingredien_key` | `CREATE UNIQUE INDEX ingredient_category_assignmen_fk_ingredient_id_fk_ingredien_key ON venus.ingredient_category_assignments USING btree (fk_ingredient_id, fk_ingredient_category_id)` |
 
+### `venus.ingredient_effect_validation_audit`
+
+| # | Campo | Tipo | Aceita NULL? | Default | Papel | Descrição |
+|---:|---|---|:---:|---|---|---|
+| 1 | `audit_id` | `bigint` | não | `nextval('venus.ingredient_effect_validation_audit_audit_id_seq'::regclass)` | PK | — |
+| 2 | `ingredient_effect_id` | `bigint` | não | `—` | — | — |
+| 3 | `fk_ingredient_id` | `bigint` | não | `—` | FK | — |
+| 4 | `from_effect_category` | `text` | não | `—` | — | — |
+| 5 | `to_effect_category` | `text` | não | `—` | — | — |
+| 6 | `from_review_status` | `text` | não | `—` | — | — |
+| 7 | `to_review_status` | `text` | não | `—` | — | — |
+| 8 | `evidence_level` | `text` | não | `—` | — | — |
+| 9 | `source_reference` | `text` | sim | `—` | — | — |
+| 10 | `decision` | `text` | não | `—` | — | — |
+| 11 | `methodology_version` | `text` | não | `'v1'::text` | — | — |
+| 12 | `applied_at` | `timestamp with time zone` | não | `now()` | — | — |
+
+**Constraints**
+
+| Nome | Tipo | Definição |
+|---|---|---|
+| `ingredient_effect_validation_audit_fk_ingredient_id_fkey` | `FK` | `FOREIGN KEY (fk_ingredient_id) REFERENCES venus.ingredients(ingredient_id) ON DELETE CASCADE` |
+| `ingredient_effect_validation_audit_pkey` | `PK` | `PRIMARY KEY (audit_id)` |
+
 ### `venus.ingredient_effects`
 
 | # | Campo | Tipo | Aceita NULL? | Default | Papel | Descrição |
@@ -533,6 +600,38 @@ Relação explícita entre alergias e ingredientes INCI para compatibilidade de 
 | Nome | Definição |
 |---|---|
 | `ingredient_effects_fk_ingredient_id_fk_profile_tag_id_effec_key` | `CREATE UNIQUE INDEX ingredient_effects_fk_ingredient_id_fk_profile_tag_id_effec_key ON venus.ingredient_effects USING btree (fk_ingredient_id, fk_profile_tag_id, effect_category, effect_name)` |
+
+### `venus.ingredient_evidence_queue`
+
+Fila de curadoria para substituir assessments indiretos v1/low e confidence default por evidência específica.
+
+| # | Campo | Tipo | Aceita NULL? | Default | Papel | Descrição |
+|---:|---|---|:---:|---|---|---|
+| 1 | `ingredient_evidence_queue_id` | `bigint` | não | `—` | PK | — |
+| 2 | `fk_ingredient_id` | `bigint` | não | `—` | UQ, FK | — |
+| 3 | `priority` | `smallint` | não | `—` | — | — |
+| 4 | `is_currently_used` | `boolean` | não | `false` | — | — |
+| 5 | `queue_status` | `text` | não | `'queued'::text` | — | — |
+| 6 | `target_evidence_level` | `venus.evidence_level_enum` | não | `'medium'::venus.evidence_level_enum` | — | — |
+| 7 | `reason` | `text` | não | `—` | — | — |
+| 8 | `created_at` | `timestamp with time zone` | não | `now()` | — | — |
+| 9 | `updated_at` | `timestamp with time zone` | não | `now()` | — | — |
+
+**Constraints**
+
+| Nome | Tipo | Definição |
+|---|---|---|
+| `ingredient_evidence_queue_priority_check` | `CHECK` | `CHECK (priority >= 1 AND priority <= 100)` |
+| `ingredient_evidence_queue_queue_status_check` | `CHECK` | `CHECK (queue_status = ANY (ARRAY['queued'::text, 'in_progress'::text, 'completed'::text, 'blocked'::text]))` |
+| `ingredient_evidence_queue_fk_ingredient_id_fkey` | `FK` | `FOREIGN KEY (fk_ingredient_id) REFERENCES venus.ingredients(ingredient_id) ON DELETE CASCADE` |
+| `ingredient_evidence_queue_pkey` | `PK` | `PRIMARY KEY (ingredient_evidence_queue_id)` |
+| `ingredient_evidence_queue_fk_ingredient_id_key` | `UQ` | `UNIQUE (fk_ingredient_id)` |
+
+**Índices únicos**
+
+| Nome | Definição |
+|---|---|
+| `ingredient_evidence_queue_fk_ingredient_id_key` | `CREATE UNIQUE INDEX ingredient_evidence_queue_fk_ingredient_id_key ON venus.ingredient_evidence_queue USING btree (fk_ingredient_id)` |
 
 ### `venus.ingredient_properties`
 
@@ -706,17 +805,19 @@ Definição, evidência mínima e âncoras por eixo da metodologia ativa.
 | 9 | `comedogenicity_score` | `smallint` | não | `0` | — | — |
 | 10 | `environmental_risk_level` | `smallint` | não | `0` | — | — |
 | 11 | `safety_summary` | `text` | não | `''::text` | — | — |
-| 12 | `scientific_confidence` | `smallint` | não | `1` | — | — |
+| 12 | `scientific_confidence` | `smallint` | não | `0` | — | — |
 | 13 | `source_type` | `venus.source_type_enum` | não | `'import'::venus.source_type_enum` | — | — |
 | 14 | `source_reference` | `text` | sim | `—` | — | — |
 | 15 | `created_at` | `timestamp with time zone` | não | `now()` | — | — |
 | 16 | `updated_at` | `timestamp with time zone` | não | `now()` | — | — |
+| 17 | `scientific_confidence_state` | `text` | não | `'default'::text` | — | default = fallback 1 sem avaliação específica; derived = valor calculado por regra; curated = evidência específica revisada. |
 
 **Constraints**
 
 | Nome | Tipo | Definição |
 |---|---|---|
-| `ck_ingredients_scientific_confidence_range` | `CHECK` | `CHECK (scientific_confidence >= 1 AND scientific_confidence <= 100)` |
+| `ck_ingredients_scientific_confidence_range` | `CHECK` | `CHECK (scientific_confidence >= 0 AND scientific_confidence <= 100)` |
+| `ck_ingredients_scientific_confidence_state` | `CHECK` | `CHECK (scientific_confidence_state = ANY (ARRAY['default'::text, 'derived'::text, 'curated'::text]))` |
 | `ingredients_fk_ingredient_category_id_fkey` | `FK` | `FOREIGN KEY (fk_ingredient_category_id) REFERENCES venus.ingredient_categories(ingredient_category_id) ON DELETE RESTRICT` |
 | `ingredients_pkey` | `PK` | `PRIMARY KEY (ingredient_id)` |
 | `ingredients_inci_name_key` | `UQ` | `UNIQUE (inci_name)` |
@@ -818,6 +919,26 @@ Canonical registry of Cloudinary media assets. Binary content is stored outside 
 | Nome | Definição |
 |---|---|
 | `packaging_fk_product_version_id_key` | `CREATE UNIQUE INDEX packaging_fk_product_version_id_key ON venus.packaging USING btree (fk_product_version_id)` |
+
+### `venus.packaging_evaluation_policies`
+
+| # | Campo | Tipo | Aceita NULL? | Default | Papel | Descrição |
+|---:|---|---|:---:|---|---|---|
+| 1 | `policy_version` | `text` | não | `—` | PK | — |
+| 2 | `status` | `text` | não | `—` | — | — |
+| 3 | `missing_packaging_policy` | `text` | não | `—` | — | — |
+| 4 | `unverified_packaging_policy` | `text` | não | `—` | — | — |
+| 5 | `source_hierarchy` | `jsonb` | não | `—` | — | — |
+| 6 | `effective_from` | `date` | não | `—` | — | — |
+| 7 | `created_at` | `timestamp with time zone` | não | `now()` | — | — |
+| 8 | `updated_at` | `timestamp with time zone` | não | `now()` | — | — |
+
+**Constraints**
+
+| Nome | Tipo | Definição |
+|---|---|---|
+| `packaging_evaluation_policies_status_check` | `CHECK` | `CHECK (status = ANY (ARRAY['active'::text, 'retired'::text]))` |
+| `packaging_evaluation_policies_pkey` | `PK` | `PRIMARY KEY (policy_version)` |
 
 ### `venus.personalized_scores`
 
@@ -1633,17 +1754,17 @@ Histórico de scores removidos porque a entrada deixou de atender aos critérios
 | 6 | `has_melasma` | `boolean` | sim | `—` | — | — |
 | 7 | `has_rosacea` | `boolean` | sim | `—` | — | — |
 | 8 | `has_eczema` | `boolean` | sim | `—` | — | — |
-| 10 | `scalp_type` | `venus.scalp_type_enum` | sim | `—` | — | — |
-| 11 | `skin_sensitivity` | `venus.sensitivity_level_enum` | sim | `—` | — | — |
-| 12 | `acne_prone` | `boolean` | sim | `—` | — | — |
-| 13 | `age_range` | `venus.age_range_enum` | sim | `—` | — | — |
-| 14 | `gender` | `venus.gender_enum` | sim | `—` | — | — |
-| 15 | `is_pregnant` | `boolean` | sim | `—` | — | — |
-| 16 | `is_active` | `boolean` | não | `true` | — | — |
-| 17 | `created_at` | `timestamp with time zone` | não | `now()` | — | — |
-| 18 | `updated_at` | `timestamp with time zone` | não | `now()` | — | — |
-| 19 | `hair_pattern` | `venus.hair_pattern_enum` | sim | `—` | — | Classificação específica do padrão capilar: 1A–4C ou other. Nullable para perfis legados ainda sem granularidade. |
-| 20 | `is_breastfeeding` | `boolean` | sim | `—` | — | — |
+| 9 | `scalp_type` | `venus.scalp_type_enum` | sim | `—` | — | — |
+| 10 | `skin_sensitivity` | `venus.sensitivity_level_enum` | sim | `—` | — | — |
+| 11 | `acne_prone` | `boolean` | sim | `—` | — | — |
+| 12 | `age_range` | `venus.age_range_enum` | sim | `—` | — | — |
+| 13 | `gender` | `venus.gender_enum` | sim | `—` | — | — |
+| 14 | `is_pregnant` | `boolean` | sim | `—` | — | — |
+| 15 | `is_active` | `boolean` | não | `true` | — | — |
+| 16 | `created_at` | `timestamp with time zone` | não | `now()` | — | — |
+| 17 | `updated_at` | `timestamp with time zone` | não | `now()` | — | — |
+| 18 | `hair_pattern` | `venus.hair_pattern_enum` | sim | `—` | — | Classificação específica do padrão capilar: 1A–4C ou other. Nullable para perfis legados ainda sem granularidade. |
+| 19 | `is_breastfeeding` | `boolean` | sim | `—` | — | — |
 
 **Constraints**
 
@@ -1659,6 +1780,34 @@ Histórico de scores removidos porque a entrada deixou de atender aos critérios
 | Nome | Definição |
 |---|---|
 | `user_profiles_fk_user_id_key` | `CREATE UNIQUE INDEX user_profiles_fk_user_id_key ON venus.user_profiles USING btree (fk_user_id)` |
+
+### `venus.user_tracking_events`
+
+| # | Campo | Tipo | Aceita NULL? | Default | Papel | Descrição |
+|---:|---|---|:---:|---|---|---|
+| 1 | `tracking_event_id` | `bigint` | não | `—` | PK | — |
+| 2 | `fk_user_id` | `bigint` | sim | `—` | FK | — |
+| 3 | `user_external_id` | `text` | sim | `—` | — | — |
+| 4 | `anonymous_id` | `text` | sim | `—` | — | — |
+| 5 | `platform` | `text` | não | `—` | — | — |
+| 6 | `event_name` | `text` | não | `—` | — | — |
+| 7 | `session_id` | `text` | sim | `—` | — | — |
+| 8 | `screen_name` | `text` | sim | `—` | — | — |
+| 9 | `app_version` | `text` | sim | `—` | — | — |
+| 10 | `device_os` | `text` | sim | `—` | — | — |
+| 11 | `device_id_hash` | `text` | sim | `—` | — | — |
+| 12 | `occurred_at` | `timestamp with time zone` | não | `now()` | — | — |
+| 13 | `metadata` | `jsonb` | não | `'{}'::jsonb` | — | — |
+| 14 | `created_at` | `timestamp with time zone` | não | `now()` | — | — |
+
+**Constraints**
+
+| Nome | Tipo | Definição |
+|---|---|---|
+| `ck_user_tracking_events_name` | `CHECK` | `CHECK (event_name = btrim(event_name) AND length(event_name) >= 1 AND length(event_name) <= 120)` |
+| `ck_user_tracking_events_platform` | `CHECK` | `CHECK (platform = ANY (ARRAY['mobile'::text, 'web'::text]))` |
+| `user_tracking_events_fk_user_id_fkey` | `FK` | `FOREIGN KEY (fk_user_id) REFERENCES venus.users(user_id) ON DELETE SET NULL` |
+| `user_tracking_events_pkey` | `PK` | `PRIMARY KEY (tracking_event_id)` |
 
 ### `venus.users`
 
@@ -1825,6 +1974,7 @@ Histórico de scores removidos porque a entrada deixou de atender aos critérios
 | `analysis_results_fk_product_version_id_fkey` | `venus.analysis_results.fk_product_version_id` | `venus.product_versions.product_version_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `analysis_results_fk_scoring_model_id_fkey` | `venus.analysis_results.fk_scoring_model_id` | `venus.scoring_models.scoring_model_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `RESTRICT` | `NO ACTION` |
 | `analysis_results_fk_user_id_fkey` | `venus.analysis_results.fk_user_id` | `venus.users.user_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
+| `brand_claim_evidence_fk_brand_id_fkey` | `venus.brand_claim_evidence.fk_brand_id` | `venus.brands.brand_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `compatibility_rules_fk_ingredient_effect_id_fkey` | `venus.compatibility_rules.fk_ingredient_effect_id` | `venus.ingredient_effects.ingredient_effect_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `compatibility_rules_fk_scoring_model_id_fkey` | `venus.compatibility_rules.fk_scoring_model_id` | `venus.scoring_models.scoring_model_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `RESTRICT` | `NO ACTION` |
 | `favorites_fk_product_id_fkey` | `venus.favorites.fk_product_id` | `venus.products.product_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
@@ -1834,8 +1984,10 @@ Histórico de scores removidos porque a entrada deixou de atender aos critérios
 | `ingredient_categories_parent_ingredient_category_id_fkey` | `venus.ingredient_categories.parent_ingredient_category_id` | `venus.ingredient_categories.ingredient_category_id` | `child 0..1 -> parent 1..1; parent -> child 0..N` | `SET NULL` | `NO ACTION` |
 | `ingredient_category_assignments_fk_ingredient_category_id_fkey` | `venus.ingredient_category_assignments.fk_ingredient_category_id` | `venus.ingredient_categories.ingredient_category_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `RESTRICT` | `NO ACTION` |
 | `ingredient_category_assignments_fk_ingredient_id_fkey` | `venus.ingredient_category_assignments.fk_ingredient_id` | `venus.ingredients.ingredient_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
+| `ingredient_effect_validation_audit_fk_ingredient_id_fkey` | `venus.ingredient_effect_validation_audit.fk_ingredient_id` | `venus.ingredients.ingredient_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `ingredient_effects_fk_ingredient_id_fkey` | `venus.ingredient_effects.fk_ingredient_id` | `venus.ingredients.ingredient_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `ingredient_effects_fk_profile_tag_id_fkey` | `venus.ingredient_effects.fk_profile_tag_id` | `venus.profile_tags.profile_tag_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
+| `ingredient_evidence_queue_fk_ingredient_id_fkey` | `venus.ingredient_evidence_queue.fk_ingredient_id` | `venus.ingredients.ingredient_id` | `child 1..1 -> parent 1..1; parent -> child 0..1` | `CASCADE` | `NO ACTION` |
 | `ingredient_properties_fk_ingredient_id_fkey` | `venus.ingredient_properties.fk_ingredient_id` | `venus.ingredients.ingredient_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `ingredient_regulations_fk_ingredient_id_fkey` | `venus.ingredient_regulations.fk_ingredient_id` | `venus.ingredients.ingredient_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `ingredient_regulations_fk_regulation_id_fkey` | `venus.ingredient_regulations.fk_regulation_id` | `venus.regulations.regulation_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
@@ -1890,6 +2042,7 @@ Histórico de scores removidos porque a entrada deixou de atender aos critérios
 | `user_profile_tags_fk_profile_tag_id_fkey` | `venus.user_profile_tags.fk_profile_tag_id` | `venus.profile_tags.profile_tag_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `user_profile_tags_fk_user_id_fkey` | `venus.user_profile_tags.fk_user_id` | `venus.users.user_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `user_profiles_fk_user_id_fkey` | `venus.user_profiles.fk_user_id` | `venus.users.user_id` | `child 1..1 -> parent 1..1; parent -> child 0..1` | `CASCADE` | `NO ACTION` |
+| `user_tracking_events_fk_user_id_fkey` | `venus.user_tracking_events.fk_user_id` | `venus.users.user_id` | `child 0..1 -> parent 1..1; parent -> child 0..N` | `SET NULL` | `NO ACTION` |
 | `rpa_error_batch_id_fkey` | `venus_rpa.rpa_error.batch_id` | `venus_rpa.rpa_run.batch_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `rpa_stage_product_batch_id_fkey` | `venus_rpa.rpa_stage_product.batch_id` | `venus_rpa.rpa_run.batch_id` | `child 1..1 -> parent 1..1; parent -> child 0..N` | `CASCADE` | `NO ACTION` |
 | `rpa_stage_product_loaded_product_id_fkey` | `venus_rpa.rpa_stage_product.loaded_product_id` | `venus.products.product_id` | `child 0..1 -> parent 1..1; parent -> child 0..N` | `SET NULL` | `NO ACTION` |
@@ -1937,14 +2090,19 @@ Histórico de scores removidos porque a entrada deixou de atender aos critérios
 | Schema | Nome | Tipo | Descrição |
 |---|---|---|---|
 | `venus` | `v_available_allergies` | view | — |
+| `venus` | `v_brand_claim_status` | view | Status ético por marca: verified, explicit_negative, conflict ou unknown. NULL não deve ser tratado como false sem evidência. |
 | `venus` | `v_data_catalog_columns` | view | — |
 | `venus` | `v_data_catalog_tables` | view | — |
 | `venus` | `v_dau` | view | — |
 | `venus` | `v_dau_rolling_30d` | view | — |
 | `venus` | `v_ingredient_category_links` | view | — |
 | `venus` | `v_ingredient_category_tree` | view | — |
+| `venus` | `v_ingredient_evaluation_status` | view | Contrato de avaliação: confidence padrão não é avaliação; is_really_evaluated exige quatro assessments v2 com fonte. |
 | `venus` | `v_ingredient_risk_coverage` | view | — |
 | `venus` | `v_ingredient_risk_inference_v1` | view | Regra determinística v1 para inferência conservadora; os scores aprovados carregam evidence_level=low e não são conclusões toxicológicas diretas. |
+| `venus` | `v_ingredient_risk_inference_v2` | view | — |
+| `venus` | `v_packaging_evaluation_status` | view | Contrato v1: embalagem ausente ou sem evidência fica unknown e não deve ser preenchida por inferência. |
+| `venus` | `v_product_fragrance_flags` | view | Contrato consumível pelo backend/mobile para o aviso Contém fragrância baseado na categoria canônica. |
 | `venus` | `v_product_photos` | view | — |
 | `venus` | `v_product_score_readiness` | view | — |
 | `venus` | `v_user_avatars` | view | — |
@@ -1985,4 +2143,4 @@ Histórico de scores removidos porque a entrada deixou de atender aos critérios
 
 ## Regra de atualização
 
-Este documento é gerado por `python ops/generate_database_model.py` após uma alteração de schema ou migração. O gerador consulta somente metadados e não cria, altera ou remove objetos no banco.
+Este documento é gerado por `python ops/generate_database_model.py` após uma alteração de schema ou migração. O gerador consulta somente metadados e não cria, altera ou remove objetos no banco. Os arquivos brM3 em `docs/modelos lógicos/` continuam sendo os desenhos visuais editáveis.

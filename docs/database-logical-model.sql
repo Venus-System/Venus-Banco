@@ -91,6 +91,19 @@ CREATE TABLE "venus"."analysis_results" (
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE "venus"."brand_claim_evidence" (
+    "brand_claim_evidence_id" bigint DEFAULT nextval('venus.brand_claim_evidence_brand_claim_evidence_id_seq'::regclass) NOT NULL,
+    "fk_brand_id" bigint NOT NULL,
+    "claim_type" text NOT NULL,
+    "claim_value" boolean DEFAULT true NOT NULL,
+    "source_url" text NOT NULL,
+    "source_title" text NOT NULL,
+    "evidence_note" text NOT NULL,
+    "evidence_level" text NOT NULL,
+    "verified_at" timestamp with time zone DEFAULT now() NOT NULL,
+    "methodology_version" text DEFAULT 'v1'::text NOT NULL
+);
+
 CREATE TABLE "venus"."brands" (
     "brand_id" bigint NOT NULL,
     "name" text NOT NULL,
@@ -102,6 +115,8 @@ CREATE TABLE "venus"."brands" (
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
+COMMENT ON COLUMN "venus"."brands"."has_cruelty_free_claim" IS 'TRUE/FALSE somente quando houver evidência elegível; NULL significa desconhecido.';
+COMMENT ON COLUMN "venus"."brands"."has_vegan_claim" IS 'TRUE/FALSE somente quando houver evidência elegível; NULL significa desconhecido.';
 
 CREATE TABLE "venus"."claims" (
     "claim_id" bigint NOT NULL,
@@ -227,6 +242,21 @@ CREATE TABLE "venus"."ingredient_category_assignments" (
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 
+CREATE TABLE "venus"."ingredient_effect_validation_audit" (
+    "audit_id" bigint DEFAULT nextval('venus.ingredient_effect_validation_audit_audit_id_seq'::regclass) NOT NULL,
+    "ingredient_effect_id" bigint NOT NULL,
+    "fk_ingredient_id" bigint NOT NULL,
+    "from_effect_category" text NOT NULL,
+    "to_effect_category" text NOT NULL,
+    "from_review_status" text NOT NULL,
+    "to_review_status" text NOT NULL,
+    "evidence_level" text NOT NULL,
+    "source_reference" text,
+    "decision" text NOT NULL,
+    "methodology_version" text DEFAULT 'v1'::text NOT NULL,
+    "applied_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
 CREATE TABLE "venus"."ingredient_effects" (
     "ingredient_effect_id" bigint NOT NULL,
     "fk_ingredient_id" bigint NOT NULL,
@@ -242,6 +272,19 @@ CREATE TABLE "venus"."ingredient_effects" (
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
+
+CREATE TABLE "venus"."ingredient_evidence_queue" (
+    "ingredient_evidence_queue_id" bigint NOT NULL,
+    "fk_ingredient_id" bigint NOT NULL,
+    "priority" smallint NOT NULL,
+    "is_currently_used" boolean DEFAULT false NOT NULL,
+    "queue_status" text DEFAULT 'queued'::text NOT NULL,
+    "target_evidence_level" venus.evidence_level_enum DEFAULT 'medium'::venus.evidence_level_enum NOT NULL,
+    "reason" text NOT NULL,
+    "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+COMMENT ON TABLE "venus"."ingredient_evidence_queue" IS 'Fila de curadoria para substituir assessments indiretos v1/low e confidence default por evidência específica.';
 
 CREATE TABLE "venus"."ingredient_properties" (
     "ingredient_property_id" bigint NOT NULL,
@@ -331,12 +374,14 @@ CREATE TABLE "venus"."ingredients" (
     "comedogenicity_score" smallint DEFAULT 0 NOT NULL,
     "environmental_risk_level" smallint DEFAULT 0 NOT NULL,
     "safety_summary" text DEFAULT ''::text NOT NULL,
-    "scientific_confidence" smallint DEFAULT 1 NOT NULL,
+    "scientific_confidence" smallint DEFAULT 0 NOT NULL,
     "source_type" venus.source_type_enum DEFAULT 'import'::venus.source_type_enum NOT NULL,
     "source_reference" text,
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
-    "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+    "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+    "scientific_confidence_state" text DEFAULT 'default'::text NOT NULL
 );
+COMMENT ON COLUMN "venus"."ingredients"."scientific_confidence_state" IS 'default = fallback 1 sem avaliação específica; derived = valor calculado por regra; curated = evidência específica revisada.';
 
 CREATE TABLE "venus"."media_assets" (
     "media_asset_id" bigint NOT NULL,
@@ -384,6 +429,17 @@ CREATE TABLE "venus"."packaging" (
     "source_type" venus.source_type_enum DEFAULT 'admin'::venus.source_type_enum NOT NULL,
     "source_reference" text,
     "was_manual_verified" boolean DEFAULT false NOT NULL,
+    "created_at" timestamp with time zone DEFAULT now() NOT NULL,
+    "updated_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
+CREATE TABLE "venus"."packaging_evaluation_policies" (
+    "policy_version" text NOT NULL,
+    "status" text NOT NULL,
+    "missing_packaging_policy" text NOT NULL,
+    "unverified_packaging_policy" text NOT NULL,
+    "source_hierarchy" jsonb NOT NULL,
+    "effective_from" date NOT NULL,
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -744,6 +800,23 @@ CREATE TABLE "venus"."user_profiles" (
 );
 COMMENT ON COLUMN "venus"."user_profiles"."hair_pattern" IS 'Classificação específica do padrão capilar: 1A–4C ou other. Nullable para perfis legados ainda sem granularidade.';
 
+CREATE TABLE "venus"."user_tracking_events" (
+    "tracking_event_id" bigint NOT NULL,
+    "fk_user_id" bigint,
+    "user_external_id" text,
+    "anonymous_id" text,
+    "platform" text NOT NULL,
+    "event_name" text NOT NULL,
+    "session_id" text,
+    "screen_name" text,
+    "app_version" text,
+    "device_os" text,
+    "device_id_hash" text,
+    "occurred_at" timestamp with time zone DEFAULT now() NOT NULL,
+    "metadata" jsonb DEFAULT '{}'::jsonb NOT NULL,
+    "created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+
 CREATE TABLE "venus"."users" (
     "user_id" bigint NOT NULL,
     "firebase_uid" text NOT NULL,
@@ -848,9 +921,20 @@ ALTER TABLE "venus"."analysis_results" ADD CONSTRAINT "analysis_results_fk_scori
 ALTER TABLE "venus"."analysis_results" ADD CONSTRAINT "analysis_results_fk_user_id_fkey" FOREIGN KEY ("fk_user_id") REFERENCES "venus"."users" ("user_id") ON DELETE CASCADE;
 ALTER TABLE "venus"."analysis_results" ADD CONSTRAINT "analysis_results_pkey" PRIMARY KEY (analysis_result_id);
 
+ALTER TABLE "venus"."brand_claim_evidence" ADD CONSTRAINT "brand_claim_evidence_claim_type_check" CHECK (claim_type = ANY (ARRAY['vegan'::text, 'cruelty_free'::text, 'brazilian'::text]));
+ALTER TABLE "venus"."brand_claim_evidence" ADD CONSTRAINT "brand_claim_evidence_evidence_level_check" CHECK (evidence_level = ANY (ARRAY['high'::text, 'medium'::text, 'low'::text]));
+ALTER TABLE "venus"."brand_claim_evidence" ADD CONSTRAINT "brand_claim_evidence_note_nonblank" CHECK (btrim(evidence_note) <> ''::text);
+ALTER TABLE "venus"."brand_claim_evidence" ADD CONSTRAINT "brand_claim_evidence_source_title_nonblank" CHECK (btrim(source_title) <> ''::text);
+ALTER TABLE "venus"."brand_claim_evidence" ADD CONSTRAINT "brand_claim_evidence_source_url_nonblank" CHECK (btrim(source_url) <> ''::text);
+ALTER TABLE "venus"."brand_claim_evidence" ADD CONSTRAINT "brand_claim_evidence_fk_brand_id_fkey" FOREIGN KEY ("fk_brand_id") REFERENCES "venus"."brands" ("brand_id") ON DELETE CASCADE;
+ALTER TABLE "venus"."brand_claim_evidence" ADD CONSTRAINT "brand_claim_evidence_pkey" PRIMARY KEY (brand_claim_evidence_id);
+ALTER TABLE "venus"."brand_claim_evidence" ADD CONSTRAINT "brand_claim_evidence_fk_brand_id_claim_type_source_url_key" UNIQUE (fk_brand_id, claim_type, source_url);
+CREATE UNIQUE INDEX brand_claim_evidence_fk_brand_id_claim_type_source_url_key ON venus.brand_claim_evidence USING btree (fk_brand_id, claim_type, source_url);
+
 ALTER TABLE "venus"."brands" ADD CONSTRAINT "brands_pkey" PRIMARY KEY (brand_id);
 ALTER TABLE "venus"."brands" ADD CONSTRAINT "brands_name_country_key" UNIQUE (name, country);
 CREATE UNIQUE INDEX brands_name_country_key ON venus.brands USING btree (name, country);
+CREATE UNIQUE INDEX uq_brands_name_normalized ON venus.brands USING btree (lower(btrim(name)));
 
 ALTER TABLE "venus"."claims" ADD CONSTRAINT "claims_pkey" PRIMARY KEY (claim_id);
 ALTER TABLE "venus"."claims" ADD CONSTRAINT "claims_name_key" UNIQUE (name);
@@ -904,11 +988,21 @@ ALTER TABLE "venus"."ingredient_category_assignments" ADD CONSTRAINT "ingredient
 ALTER TABLE "venus"."ingredient_category_assignments" ADD CONSTRAINT "ingredient_category_assignmen_fk_ingredient_id_fk_ingredien_key" UNIQUE (fk_ingredient_id, fk_ingredient_category_id);
 CREATE UNIQUE INDEX ingredient_category_assignmen_fk_ingredient_id_fk_ingredien_key ON venus.ingredient_category_assignments USING btree (fk_ingredient_id, fk_ingredient_category_id);
 
+ALTER TABLE "venus"."ingredient_effect_validation_audit" ADD CONSTRAINT "ingredient_effect_validation_audit_fk_ingredient_id_fkey" FOREIGN KEY ("fk_ingredient_id") REFERENCES "venus"."ingredients" ("ingredient_id") ON DELETE CASCADE;
+ALTER TABLE "venus"."ingredient_effect_validation_audit" ADD CONSTRAINT "ingredient_effect_validation_audit_pkey" PRIMARY KEY (audit_id);
+
 ALTER TABLE "venus"."ingredient_effects" ADD CONSTRAINT "ingredient_effects_fk_ingredient_id_fkey" FOREIGN KEY ("fk_ingredient_id") REFERENCES "venus"."ingredients" ("ingredient_id") ON DELETE CASCADE;
 ALTER TABLE "venus"."ingredient_effects" ADD CONSTRAINT "ingredient_effects_fk_profile_tag_id_fkey" FOREIGN KEY ("fk_profile_tag_id") REFERENCES "venus"."profile_tags" ("profile_tag_id") ON DELETE CASCADE;
 ALTER TABLE "venus"."ingredient_effects" ADD CONSTRAINT "ingredient_effects_pkey" PRIMARY KEY (ingredient_effect_id);
 ALTER TABLE "venus"."ingredient_effects" ADD CONSTRAINT "ingredient_effects_fk_ingredient_id_fk_profile_tag_id_effec_key" UNIQUE (fk_ingredient_id, fk_profile_tag_id, effect_category, effect_name);
 CREATE UNIQUE INDEX ingredient_effects_fk_ingredient_id_fk_profile_tag_id_effec_key ON venus.ingredient_effects USING btree (fk_ingredient_id, fk_profile_tag_id, effect_category, effect_name);
+
+ALTER TABLE "venus"."ingredient_evidence_queue" ADD CONSTRAINT "ingredient_evidence_queue_priority_check" CHECK (priority >= 1 AND priority <= 100);
+ALTER TABLE "venus"."ingredient_evidence_queue" ADD CONSTRAINT "ingredient_evidence_queue_queue_status_check" CHECK (queue_status = ANY (ARRAY['queued'::text, 'in_progress'::text, 'completed'::text, 'blocked'::text]));
+ALTER TABLE "venus"."ingredient_evidence_queue" ADD CONSTRAINT "ingredient_evidence_queue_fk_ingredient_id_fkey" FOREIGN KEY ("fk_ingredient_id") REFERENCES "venus"."ingredients" ("ingredient_id") ON DELETE CASCADE;
+ALTER TABLE "venus"."ingredient_evidence_queue" ADD CONSTRAINT "ingredient_evidence_queue_pkey" PRIMARY KEY (ingredient_evidence_queue_id);
+ALTER TABLE "venus"."ingredient_evidence_queue" ADD CONSTRAINT "ingredient_evidence_queue_fk_ingredient_id_key" UNIQUE (fk_ingredient_id);
+CREATE UNIQUE INDEX ingredient_evidence_queue_fk_ingredient_id_key ON venus.ingredient_evidence_queue USING btree (fk_ingredient_id);
 
 ALTER TABLE "venus"."ingredient_properties" ADD CONSTRAINT "ingredient_properties_fk_ingredient_id_fkey" FOREIGN KEY ("fk_ingredient_id") REFERENCES "venus"."ingredients" ("ingredient_id") ON DELETE CASCADE;
 ALTER TABLE "venus"."ingredient_properties" ADD CONSTRAINT "ingredient_properties_pkey" PRIMARY KEY (ingredient_property_id);
@@ -940,7 +1034,8 @@ ALTER TABLE "venus"."ingredient_risk_methodology_dimensions" ADD CONSTRAINT "ing
 ALTER TABLE "venus"."ingredient_risk_methodology_dimensions" ADD CONSTRAINT "ingredient_risk_methodology_dimensions_methodology_version_fkey" FOREIGN KEY ("methodology_version") REFERENCES "venus"."ingredient_risk_methodologies" ("methodology_version") ON DELETE RESTRICT;
 ALTER TABLE "venus"."ingredient_risk_methodology_dimensions" ADD CONSTRAINT "ingredient_risk_methodology_dimensions_pkey" PRIMARY KEY (methodology_version, dimension);
 
-ALTER TABLE "venus"."ingredients" ADD CONSTRAINT "ck_ingredients_scientific_confidence_range" CHECK (scientific_confidence >= 1 AND scientific_confidence <= 100);
+ALTER TABLE "venus"."ingredients" ADD CONSTRAINT "ck_ingredients_scientific_confidence_range" CHECK (scientific_confidence >= 0 AND scientific_confidence <= 100);
+ALTER TABLE "venus"."ingredients" ADD CONSTRAINT "ck_ingredients_scientific_confidence_state" CHECK (scientific_confidence_state = ANY (ARRAY['default'::text, 'derived'::text, 'curated'::text]));
 ALTER TABLE "venus"."ingredients" ADD CONSTRAINT "ingredients_fk_ingredient_category_id_fkey" FOREIGN KEY ("fk_ingredient_category_id") REFERENCES "venus"."ingredient_categories" ("ingredient_category_id") ON DELETE RESTRICT;
 ALTER TABLE "venus"."ingredients" ADD CONSTRAINT "ingredients_pkey" PRIMARY KEY (ingredient_id);
 ALTER TABLE "venus"."ingredients" ADD CONSTRAINT "ingredients_inci_name_key" UNIQUE (inci_name);
@@ -969,6 +1064,9 @@ ALTER TABLE "venus"."packaging" ADD CONSTRAINT "packaging_fk_product_version_id_
 ALTER TABLE "venus"."packaging" ADD CONSTRAINT "packaging_pkey" PRIMARY KEY (packaging_id);
 ALTER TABLE "venus"."packaging" ADD CONSTRAINT "packaging_fk_product_version_id_key" UNIQUE (fk_product_version_id);
 CREATE UNIQUE INDEX packaging_fk_product_version_id_key ON venus.packaging USING btree (fk_product_version_id);
+
+ALTER TABLE "venus"."packaging_evaluation_policies" ADD CONSTRAINT "packaging_evaluation_policies_status_check" CHECK (status = ANY (ARRAY['active'::text, 'retired'::text]));
+ALTER TABLE "venus"."packaging_evaluation_policies" ADD CONSTRAINT "packaging_evaluation_policies_pkey" PRIMARY KEY (policy_version);
 
 ALTER TABLE "venus"."personalized_scores" ADD CONSTRAINT "personalized_scores_fk_analysis_result_id_fkey" FOREIGN KEY ("fk_analysis_result_id") REFERENCES "venus"."analysis_results" ("analysis_result_id") ON DELETE CASCADE;
 ALTER TABLE "venus"."personalized_scores" ADD CONSTRAINT "personalized_scores_fk_product_version_id_fkey" FOREIGN KEY ("fk_product_version_id") REFERENCES "venus"."product_versions" ("product_version_id") ON DELETE CASCADE;
@@ -1147,6 +1245,11 @@ ALTER TABLE "venus"."user_profiles" ADD CONSTRAINT "user_profiles_fk_user_id_fke
 ALTER TABLE "venus"."user_profiles" ADD CONSTRAINT "user_profiles_pkey" PRIMARY KEY (user_profile_id);
 ALTER TABLE "venus"."user_profiles" ADD CONSTRAINT "user_profiles_fk_user_id_key" UNIQUE (fk_user_id);
 CREATE UNIQUE INDEX user_profiles_fk_user_id_key ON venus.user_profiles USING btree (fk_user_id);
+
+ALTER TABLE "venus"."user_tracking_events" ADD CONSTRAINT "ck_user_tracking_events_name" CHECK (event_name = btrim(event_name) AND length(event_name) >= 1 AND length(event_name) <= 120);
+ALTER TABLE "venus"."user_tracking_events" ADD CONSTRAINT "ck_user_tracking_events_platform" CHECK (platform = ANY (ARRAY['mobile'::text, 'web'::text]));
+ALTER TABLE "venus"."user_tracking_events" ADD CONSTRAINT "user_tracking_events_fk_user_id_fkey" FOREIGN KEY ("fk_user_id") REFERENCES "venus"."users" ("user_id") ON DELETE SET NULL;
+ALTER TABLE "venus"."user_tracking_events" ADD CONSTRAINT "user_tracking_events_pkey" PRIMARY KEY (tracking_event_id);
 
 ALTER TABLE "venus"."users" ADD CONSTRAINT "users_pkey" PRIMARY KEY (user_id);
 ALTER TABLE "venus"."users" ADD CONSTRAINT "users_firebase_uid_key" UNIQUE (firebase_uid);
