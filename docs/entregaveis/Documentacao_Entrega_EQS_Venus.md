@@ -1217,3 +1217,12 @@ A entrega terminou em 30/10/2026 com o produto demonstrável de ponta a ponta, S
 O encerramento reconheceu o desempenho e o trabalho duro de toda a equipe:
 
 > **1, 2, 3, Venus!**
+
+
+## 27. Catálogo consolidado dos diagramas em PNG
+
+A entrega visual foi fechada com 30 arquivos PNG. O conjunto inclui os três diagramas Draw.io da EQS, os diagramas que já estavam versionados no Venus-Banco e no Venus-1ANO-CRUD, os diagramas Mermaid existentes na documentação do Venus-AI-api e os 17 diagramas Mermaid usados nesta documentação consolidada.
+
+O catálogo com a imagem de cada diagrama, a origem no repositório e o link relativo para o arquivo está em [DIAGRAMAS_PNG.md](diagramas-png/DIAGRAMAS_PNG.md). Os PNGs ficam reunidos em [diagramas-png/](diagramas-png/), para que possam ser reutilizados diretamente no PDF, nas evidências do M3 e na apresentação do projeto.
+
+A conversão preservou os arquivos originais: SVGs e fontes Mermaid continuam sendo a fonte editável nos repositórios; os PNGs são as evidências visuais exportadas para leitura e entrega.
