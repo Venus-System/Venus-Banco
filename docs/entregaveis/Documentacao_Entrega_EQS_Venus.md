@@ -862,7 +862,7 @@ A numeração abaixo segue a planilha Requisitos.xlsx. Os intervalos representam
 | Pesquisar produto | 69 a 72 |
 | Chatbot/IA (complementar ao diagrama original) | 65 a 68 |
 
-A leitura do diagrama é: Escanear produto inclui Registrar produto quando o item não existe e estende o fluxo para Receber pontuação e Recomendações. Os casos Cadastrar, Preencher perfil, Pesquisar produto, Visualizar histórico, Avaliar produto e Favoritar produto são acionados diretamente pelo cliente.
+A leitura do diagrama é: Escanear produto inclui Preencher perfil; Registrar produto estende Escanear produto quando o item não existe; e o fluxo de Escanear produto estende Receber pontuação e Recomendações. Os casos Cadastrar, Pesquisar produto, Visualizar histórico, Avaliar produto e Favoritar produto são acionados diretamente pelo cliente.
 
 ~~~mermaid
 flowchart LR
@@ -873,7 +873,8 @@ flowchart LR
     C --> HIST([Visualizar histórico])
     C --> RATE([Avaliar produto])
     C --> FAV([Favoritar produto])
-    SCAN -. include .-> REG([Registrar produto])
+    SCAN -. include .-> PERF
+    REG([Registrar produto]) -. extends .-> SCAN
     SCAN -. extends .-> SCORE([Receber pontuação])
     SCAN -. extends .-> REC([Recomendações])
 ~~~
