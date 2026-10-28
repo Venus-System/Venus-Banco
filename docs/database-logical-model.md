@@ -3,7 +3,7 @@
 > Snapshot gerado a partir dos metadados do PostgreSQL implantado. A fonte desta versão é o catálogo do banco, não uma inferência a partir dos nomes dos campos. O desenho visual editável está em [`docs/modelos lógicos/`](<modelos lógicos/>); este arquivo é a conferência técnica do modelo implantado.
 
 - Banco: `Venus-qa`
-- Gerado em: `2026-10-26 22:11:11 -0300`
+- Gerado em: `2026-10-28 11:22:15 -0300`
 - Schemas de tabelas: `venus, venus_audit, venus_rpa, venus_optimization`
 - Tabelas físicas: **65**
 - Relacionamentos FK: **79**
@@ -90,7 +90,7 @@ As views `venus_bi` são derivadas e não possuem armazenamento relacional indep
 | `venus` | `user_profile_tags` | 6 | 1 | 2 | — |
 | `venus` | `user_profiles` | 19 | 1 | 1 | — |
 | `venus` | `user_tracking_events` | 14 | 1 | 1 | — |
-| `venus` | `users` | 9 | 1 | 0 | — |
+| `venus` | `users` | 13 | 1 | 0 | — |
 | `venus_audit` | `audit_logs` | 9 | 1 | 0 | — |
 | `venus_rpa` | `rpa_error` | 8 | 1 | 1 | — |
 | `venus_rpa` | `rpa_run` | 12 | 1 | 0 | — |
@@ -1825,11 +1825,17 @@ Histórico de scores removidos porque a entrada deixou de atender aos critérios
 | 7 | `updated_at` | `timestamp with time zone` | não | `now()` | — | — |
 | 8 | `email` | `text` | sim | `—` | — | — |
 | 9 | `password_hash` | `text` | sim | `—` | — | — |
+| 10 | `latitude` | `numeric(5,2)` | sim | `—` | — | Latitude aproximada, arredondada a duas casas para análise regional. |
+| 11 | `longitude` | `numeric(5,2)` | sim | `—` | — | Longitude aproximada, arredondada a duas casas para análise regional. |
+| 12 | `city` | `text` | sim | `—` | — | Cidade retornada pelo geocoder do dispositivo. |
+| 13 | `state` | `text` | sim | `—` | — | Estado retornado pelo geocoder do dispositivo; geralmente nome por extenso. |
 
 **Constraints**
 
 | Nome | Tipo | Definição |
 |---|---|---|
+| `ck_users_latitude_range` | `CHECK` | `CHECK (latitude >= '-90'::integer::numeric AND latitude <= 90::numeric)` |
+| `ck_users_longitude_range` | `CHECK` | `CHECK (longitude >= '-180'::integer::numeric AND longitude <= 180::numeric)` |
 | `users_pkey` | `PK` | `PRIMARY KEY (user_id)` |
 | `users_firebase_uid_key` | `UQ` | `UNIQUE (firebase_uid)` |
 

@@ -237,6 +237,12 @@ CREATE TABLE users (
     name TEXT NOT NULL,
     status user_status_enum NOT NULL DEFAULT 'active',
     last_login TIMESTAMPTZ,
+    latitude NUMERIC(5,2)
+        CONSTRAINT ck_users_latitude_range CHECK (latitude BETWEEN -90 AND 90),
+    longitude NUMERIC(5,2)
+        CONSTRAINT ck_users_longitude_range CHECK (longitude BETWEEN -180 AND 180),
+    city TEXT,
+    state TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );

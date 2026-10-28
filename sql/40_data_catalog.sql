@@ -854,6 +854,62 @@ VALUES
 
 (
     'COLUMN',
+    'users',
+    'latitude',
+    'Latitude aproximada arredondada a duas casas.',
+    'Guarda somente a última posição regional enviada pelo aplicativo.',
+    'OWNER',
+    'Somente o próprio usuário e a API autorizada.',
+    'CONFIDENTIAL',
+    'Dado de localização aproximada vinculado ao usuário.',
+    NULL,
+    'Não usar para reconstruir localização exata ou histórico de deslocamento.'
+),
+
+(
+    'COLUMN',
+    'users',
+    'longitude',
+    'Longitude aproximada arredondada a duas casas.',
+    'Guarda somente a última posição regional enviada pelo aplicativo.',
+    'OWNER',
+    'Somente o próprio usuário e a API autorizada.',
+    'CONFIDENTIAL',
+    'Dado de localização aproximada vinculado ao usuário.',
+    NULL,
+    'Não usar para reconstruir localização exata ou histórico de deslocamento.'
+),
+
+(
+    'COLUMN',
+    'users',
+    'city',
+    'Cidade retornada pelo geocoder do dispositivo.',
+    'Guarda a cidade associada à última posição enviada.',
+    'OWNER',
+    'Somente o próprio usuário e a API autorizada.',
+    'CONFIDENTIAL',
+    'Dado de localização aproximada vinculado ao usuário.',
+    NULL,
+    'O valor é fornecido pelo geocoder e pode variar em formato.'
+),
+
+(
+    'COLUMN',
+    'users',
+    'state',
+    'Estado retornado pelo geocoder do dispositivo.',
+    'Guarda o estado associado à última posição enviada.',
+    'OWNER',
+    'Somente o próprio usuário e a API autorizada.',
+    'CONFIDENTIAL',
+    'Dado de localização aproximada vinculado ao usuário.',
+    NULL,
+    'Em geral o geocoder retorna o nome por extenso, não a UF.'
+),
+
+(
+    'COLUMN',
     'user_profiles',
     'age_range',
     'Faixa etária declarada.',
