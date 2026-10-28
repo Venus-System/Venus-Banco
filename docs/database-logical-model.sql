@@ -826,8 +826,16 @@ CREATE TABLE "venus"."users" (
     "created_at" timestamp with time zone DEFAULT now() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
     "email" text,
-    "password_hash" text
+    "password_hash" text,
+    "latitude" numeric(5,2),
+    "longitude" numeric(5,2),
+    "city" text,
+    "state" text
 );
+COMMENT ON COLUMN "venus"."users"."latitude" IS 'Latitude aproximada, arredondada a duas casas para análise regional.';
+COMMENT ON COLUMN "venus"."users"."longitude" IS 'Longitude aproximada, arredondada a duas casas para análise regional.';
+COMMENT ON COLUMN "venus"."users"."city" IS 'Cidade retornada pelo geocoder do dispositivo.';
+COMMENT ON COLUMN "venus"."users"."state" IS 'Estado retornado pelo geocoder do dispositivo; geralmente nome por extenso.';
 
 CREATE TABLE "venus_audit"."audit_logs" (
     "audit_id" bigint NOT NULL,
@@ -1251,6 +1259,8 @@ ALTER TABLE "venus"."user_tracking_events" ADD CONSTRAINT "ck_user_tracking_even
 ALTER TABLE "venus"."user_tracking_events" ADD CONSTRAINT "user_tracking_events_fk_user_id_fkey" FOREIGN KEY ("fk_user_id") REFERENCES "venus"."users" ("user_id") ON DELETE SET NULL;
 ALTER TABLE "venus"."user_tracking_events" ADD CONSTRAINT "user_tracking_events_pkey" PRIMARY KEY (tracking_event_id);
 
+ALTER TABLE "venus"."users" ADD CONSTRAINT "ck_users_latitude_range" CHECK (latitude >= '-90'::integer::numeric AND latitude <= 90::numeric);
+ALTER TABLE "venus"."users" ADD CONSTRAINT "ck_users_longitude_range" CHECK (longitude >= '-180'::integer::numeric AND longitude <= 180::numeric);
 ALTER TABLE "venus"."users" ADD CONSTRAINT "users_pkey" PRIMARY KEY (user_id);
 ALTER TABLE "venus"."users" ADD CONSTRAINT "users_firebase_uid_key" UNIQUE (firebase_uid);
 CREATE UNIQUE INDEX users_firebase_uid_key ON venus.users USING btree (firebase_uid);
