@@ -1,16 +1,16 @@
 # Redis
 
-Não foram encontrados scripts, configuração, chaves ou contrato Redis no
-repositório nem no `Banco_de_dados.zip` fornecido. A pasta existe para manter o
-mapa de tecnologias explícito sem transformar uma hipótese em arquitetura
-implementada.
+O Redis é usado como cache no Venus-CRUD e no Venus-Classificacao, com TTL de
+6 horas (`spring.cache.redis.time-to-live: 6h`). A fonte operacional continua
+sendo o PostgreSQL: se o Redis ficar fora do ar, as duas APIs seguem lendo do
+banco.
 
-## Status
+## Documentação
 
-- **Implementação evidenciada:** não.
-- **Uso documentado:** não.
-- **Validação realizada:** não aplicável.
-
-Se Redis for adotado, documente aqui a finalidade (cache, fila ou locks), as
-chaves, TTL, política de invalidação, idempotência e o produtor/consumidor. A
-fonte operacional do catálogo continuará sendo o PostgreSQL.
+- [`favoritos.md`](favoritos.md): páginas e contagem dos favoritos de cada
+  pessoa no Venus-CRUD (caches `favoritos-do-usuario` e
+  `contagem-de-favoritos-do-usuario`), com a anatomia das chaves e a
+  invalidação depois da gravação no PostgreSQL.
+- [`classificacoes.md`](classificacoes.md): resultado salvo da nota
+  personalizada no Venus-Classificacao (cache `classificacoes`), por pessoa,
+  versão do produto e modelo de pontuação.

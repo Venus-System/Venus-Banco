@@ -1,5 +1,11 @@
 # Neo4j — grafo de produtos e compatibilidade
 
+## Documentação
+
+- [`checkup_rotina.md`](checkup_rotina.md): o grafo do check-up da rotina da
+  Veninha, com nós, relações, regras dos CSV, sincronização por `rodada` e as
+  quatro verificações (conflito, ativo faltando, ordem e produtos repetidos).
+
 ## Papel
 
 Os scripts fornecidos modelam um grafo derivado para consultas de composição e
@@ -28,9 +34,10 @@ ausente, ordem e repetição de produtos.
 - `consultas/*.cyp`: consultas de compatibilidade.
 
 Os scripts foram copiados do `Banco_de_dados.zip` e não foram executados nesta
-revisão. Não há conector Neo4j no pipeline PostgreSQL deste repositório; o grafo
-deve ser tratado como projeção derivada até que um job de sincronização seja
-versionado.
+revisão. Não há conector Neo4j no pipeline PostgreSQL deste repositório; a
+sincronização do grafo está no Venus-AI-Sdk (`venus_sdk/checkup/sincronizar.py`)
+e roda manualmente pelo workflow `Sincronizar Neo4j` do Venus-AI-api. O grafo é
+uma projeção derivada do PostgreSQL.
 
 ## Ponto de atenção identificado
 

@@ -1,13 +1,26 @@
-# MongoDB — `scan_sessions`
+# MongoDB
+
+## Documentação
+
+- [`scan_sessions.md`](scan_sessions.md): coleção `scan_sessions` no formato
+  gravado pelo Venus-CRUD (captura do rótulo, ingredientes, revisão, retrato
+  aprovado e sincronização com o PostgreSQL).
+- [`historico.md`](historico.md): coleções do chatbot (`checkpoints`,
+  `checkpoint_writes`, `memorias_longo_prazo`, `metricas_requisicoes` e
+  `limites_chat`), gravadas pelo Venus-AI-Sdk e pelo Venus-AI-api.
 
 ## Papel
 
-O MongoDB armazena o documento de captura antes da projeção relacional. A
-coleção documentada é `scan_sessions`; cada documento reúne imagens, OCR,
-interpretação, revisão administrativa e o estado de sincronização com
-PostgreSQL.
+O MongoDB armazena o documento de captura antes da projeção relacional e o
+estado do chatbot. Na coleção `scan_sessions`, cada documento reúne imagens,
+OCR, ingredientes, revisão e o estado de sincronização com PostgreSQL.
 
-## Contrato resumido
+## Contrato do validador (`validation.js`)
+
+O resumo abaixo descreve o validador copiado do `Banco_de_dados.zip`. O
+Venus-CRUD grava outro formato (`ingredients` na raiz, `review`,
+`approved_snapshot` e `sync`), descrito em `scan_sessions.md`; com este
+validador ativo na coleção, o insert do CRUD seria recusado.
 
 - Identidade: `scan_id` público com prefixo `VS-`.
 - Estados: `pending_review`, `in_review`, `approved`, `rejected`,
