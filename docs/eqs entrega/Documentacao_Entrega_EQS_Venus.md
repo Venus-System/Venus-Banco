@@ -42,7 +42,7 @@ A decisão arquitetural aplicada foi separar verdade operacional, cálculo deter
 | Requisitos.xlsx | 131 requisitos funcionais, técnicos, de segurança, UX e não funcionais |
 | Draw.io de casos de uso | cadastro, perfil, scan, pesquisa, histórico, avaliação, favoritos, pontuação e recomendação |
 | Draw.io de atividades | fluxos de perfil e escaneamento |
-| Texto colado do Jira | 170 itens com chave, tipo, responsável, status, prioridade e datas |
+| [Backlog do Jira (projeto SCRUM)](https://venus2026.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog) | 170 itens com chave, tipo, responsável, status, prioridade e datas |
 
 ### Repos do projeto
 
@@ -721,8 +721,8 @@ stateDiagram-v2
     [*] --> pending_review
     pending_review --> approved: revisão/aprovação
     pending_review --> rejected: revisão/rejeição
-    approved --> synced: /sync concluído
-    approved --> sync_failed: /sync falhou
+    approved --> synced: sincronizou na aprovação
+    approved --> sync_failed: falhou na aprovação
     sync_failed --> synced: nova tentativa de /sync concluída
     sync_failed --> sync_failed: nova tentativa falhou
     rejected --> [*]
@@ -836,13 +836,13 @@ A IA explica o resultado, mas não substitui a Classificação nem altera a font
 
 ### Diagramas Draw.io inseridos no corpo da entrega
 
-![Diagrama de casos de uso do Venus](venus-diagrama-casos-de-uso.png)
+![Diagrama de casos de uso do Venus](diagramas-png/venus-eqs-casos-de-uso.png)
 
-![Diagrama de atividades do perfil](venus-diagrama-atividades-perfil.png)
+![Diagrama de atividades do perfil](diagramas-png/venus-eqs-atividades-perfil.png)
 
-![Diagrama de atividades do scan](venus-diagrama-atividades-scan.png)
+![Diagrama de atividades do scan](diagramas-png/venus-eqs-atividades-scan.png)
 
-As imagens acima foram geradas a partir dos três arquivos Draw.io originais do planejamento e ficam no mesmo diretório desta documentação para compor o corpo do texto.
+As imagens acima foram exportadas a partir dos três arquivos Draw.io originais do planejamento e ficam em `diagramas-png/` para compor o corpo do texto.
 
 ### Rastreabilidade entre casos de uso e requisitos funcionais
 
@@ -875,8 +875,8 @@ flowchart LR
     C --> FAV([Favoritar produto])
     SCAN -. include .-> PERF
     REG([Registrar produto]) -. extends .-> SCAN
-    SCAN -. extends .-> SCORE([Receber pontuação])
-    SCAN -. extends .-> REC([Recomendações])
+    SCORE([Receber pontuação]) -. extends .-> SCAN
+    REC([Recomendações]) -. extends .-> SCAN
 ~~~
 
 ~~~mermaid
