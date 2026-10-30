@@ -38,11 +38,11 @@ A decisão arquitetural aplicada foi separar verdade operacional, cálculo deter
 | Fonte | Conteúdo incorporado |
 |---|---|
 | Planejamento Venus | objetivo, visão, stack, dinâmica, papéis, escopo, fases, riscos, qualidade e entregáveis |
-| Padrão de Projeto.docx | padrão Repository aplicado ao Venus-CRUD |
-| Requisitos.xlsx | 131 requisitos funcionais, técnicos, de segurança, UX e não funcionais |
+| Padrão de Projeto.docx | referência do planejamento; arquivo original não versionado; padrões comprovados no código estão descritos na seção 28 |
+| Requisitos.xlsx | referência do planejamento; arquivo original não versionado; requisitos transcritos e rastreados nesta entrega |
 | Draw.io de casos de uso | cadastro, perfil, scan, pesquisa, histórico, avaliação, favoritos, pontuação e recomendação |
 | Draw.io de atividades | fluxos de perfil e escaneamento |
-| [Backlog do Jira (projeto SCRUM)](https://venus2026.atlassian.net/jira/software/projects/SCRUM/boards/1/backlog) | 170 itens com chave, tipo, responsável, status, prioridade e datas |
+| Texto colado do Jira | 170 itens com chave, tipo, responsável, status, prioridade e datas |
 
 ### Repos do projeto
 
@@ -721,8 +721,8 @@ stateDiagram-v2
     [*] --> pending_review
     pending_review --> approved: revisão/aprovação
     pending_review --> rejected: revisão/rejeição
-    approved --> synced: sincronizou na aprovação
-    approved --> sync_failed: falhou na aprovação
+    approved --> synced: /sync concluído
+    approved --> sync_failed: /sync falhou
     sync_failed --> synced: nova tentativa de /sync concluída
     sync_failed --> sync_failed: nova tentativa falhou
     rejected --> [*]
@@ -836,13 +836,13 @@ A IA explica o resultado, mas não substitui a Classificação nem altera a font
 
 ### Diagramas Draw.io inseridos no corpo da entrega
 
-![Diagrama de casos de uso do Venus](diagramas-png/venus-eqs-casos-de-uso.png)
+![Diagrama de casos de uso do Venus](venus-diagrama-casos-de-uso.png)
 
-![Diagrama de atividades do perfil](diagramas-png/venus-eqs-atividades-perfil.png)
+![Diagrama de atividades do perfil](venus-diagrama-atividades-perfil.png)
 
-![Diagrama de atividades do scan](diagramas-png/venus-eqs-atividades-scan.png)
+![Diagrama de atividades do scan](venus-diagrama-atividades-scan.png)
 
-As imagens acima foram exportadas a partir dos três arquivos Draw.io originais do planejamento e ficam em `diagramas-png/` para compor o corpo do texto.
+As imagens acima foram geradas a partir dos três arquivos Draw.io originais do planejamento e ficam no mesmo diretório desta documentação para compor o corpo do texto.
 
 ### Rastreabilidade entre casos de uso e requisitos funcionais
 
@@ -862,7 +862,7 @@ A numeração abaixo segue a planilha Requisitos.xlsx. Os intervalos representam
 | Pesquisar produto | 69 a 72 |
 | Chatbot/IA (complementar ao diagrama original) | 65 a 68 |
 
-A leitura do diagrama é: Escanear produto inclui Preencher perfil; Registrar produto estende Escanear produto quando o item não existe; e o fluxo de Escanear produto estende Receber pontuação e Recomendações. Os casos Cadastrar, Pesquisar produto, Visualizar histórico, Avaliar produto e Favoritar produto são acionados diretamente pelo cliente.
+A leitura do diagrama é: Escanear produto inclui Preencher perfil; Registrar produto estende Escanear produto quando o item não existe. Os casos Cadastrar, Pesquisar produto, Visualizar histórico, Avaliar produto e Favoritar produto são acionados diretamente pelo cliente.
 
 ~~~mermaid
 flowchart LR
@@ -875,8 +875,6 @@ flowchart LR
     C --> FAV([Favoritar produto])
     SCAN -. include .-> PERF
     REG([Registrar produto]) -. extends .-> SCAN
-    SCORE([Receber pontuação]) -. extends .-> SCAN
-    REC([Recomendações]) -. extends .-> SCAN
 ~~~
 
 ~~~mermaid
@@ -1227,3 +1225,41 @@ A entrega visual foi fechada com 30 arquivos PNG. O conjunto inclui os três dia
 O catálogo com a imagem de cada diagrama, a origem no repositório e o link relativo para o arquivo está em [DIAGRAMAS_PNG.md](diagramas-png/DIAGRAMAS_PNG.md). Os PNGs ficam reunidos em [diagramas-png/](diagramas-png/), para que possam ser reutilizados diretamente no PDF, nas evidências do M3 e na apresentação do projeto.
 
 A conversão preservou os arquivos originais: SVGs e fontes Mermaid continuam sendo a fonte editável nos repositórios; os PNGs são as evidências visuais exportadas para leitura e entrega.
+\n
+## 28. Padrões de projeto evidenciados
+
+Esta seção registra somente padrões identificados no código e na documentação versionados nos repositórios do projeto. A inclusão é documental: não foram criadas classes, rotas, anotações ou alterações de comportamento.
+
+Os arquivos **Padrão de Projeto.docx** e **Requisitos.xlsx**, citados no planejamento, não foram encontrados nos repositórios consultados. Por isso, a entrega considera apenas os padrões comprováveis no código existente.
+
+### 28.1 Repository
+
+O padrão Repository está aplicado no **Venus-CRUD** para encapsular a persistência e separar o acesso ao PostgreSQL e ao MongoDB da regra de negócio. Os services dependem de interfaces Spring Data, enquanto as entities e documentos permanecem isolados da camada HTTP.
+
+Evidências:
+
+- [ProductRepository.java](https://github.com/Venus-System/Venus-CRUD/blob/main/src/main/java/com/venus/crud/repository/jpa/product/ProductRepository.java)
+- [ScanSessionRepository.java](https://github.com/Venus-System/Venus-CRUD/blob/main/src/main/java/com/venus/crud/repository/mongo/ScanSessionRepository.java)
+- [Decisão de organização das camadas](https://github.com/Venus-System/Venus-CRUD/blob/main/docs/decisoes/04-pacotes-mvc.md)
+
+### 28.2 DTO + Mapper
+
+O padrão DTO + Mapper está aplicado no **Venus-CRUD** para impedir que entities JPA ou documentos Mongo sejam expostos diretamente pela API. Os DTOs definem o contrato externo e os mappers MapStruct realizam a conversão entre request/response e o modelo interno.
+
+A configuração `VenusMapperConfig` registra os mappers como beans Spring e faz o build falhar quando um campo de destino fica sem mapeamento. O `ProductMapper` exemplifica as conversões `toEntity`, `toResponse`, `updateEntity` e `patchEntity`.
+
+Evidências:
+
+- [VenusMapperConfig.java](https://github.com/Venus-System/Venus-CRUD/blob/main/src/main/java/com/venus/crud/config/VenusMapperConfig.java)
+- [ProductMapper.java](https://github.com/Venus-System/Venus-CRUD/blob/main/src/main/java/com/venus/crud/mapper/jpa/product/ProductMapper.java)
+- [ProductResponse.java](https://github.com/Venus-System/Venus-CRUD/blob/main/src/main/java/com/venus/crud/dto/jpa/response/product/ProductResponse.java)
+- [Decisão sobre MapStruct e DTOs](https://github.com/Venus-System/Venus-CRUD/blob/main/docs/decisoes/04-pacotes-mvc.md)
+
+### 28.3 Resultado da verificação dos repositórios
+
+A busca transversal encontrou evidência explícita de `Repository`, `DTO` e `Mapper` no Venus-CRUD. Nos demais repositórios, não foi localizado um artefato versionado que permita afirmar a aplicação de outro padrão de projeto. Portanto, esta documentação não atribui padrões adicionais ao Venus-Banco, Venus-Classificacao, Venus-Web, Venus-mobile, Venus-AI-api, Venus-AI-Sdk ou Venus-1ANO-CRUD.
+
+### 28.4 Limite da entrega
+
+Os padrões acima descrevem componentes que já existiam e continuam sendo usados pelo sistema. Nenhuma implementação funcional foi modificada para produzir esta seção.
+\n
