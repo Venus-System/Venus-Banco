@@ -2,7 +2,7 @@
 
 Esta seção registra somente padrões identificados no código e na documentação versionados nos repositórios do projeto. A inclusão é documental: não foram criadas classes, rotas, anotações ou alterações de comportamento.
 
-Os arquivos **Padrão de Projeto.docx** e **Requisitos.xlsx**, citados no planejamento, não foram encontrados nos repositórios consultados. Por isso, a entrega considera apenas os padrões comprováveis no código existente.
+Os arquivos **Padrão de Projeto.docx** e **Requisitos.xlsx**, citados no planejamento, não foram encontrados nos repositórios do projeto. Por isso, a entrega considera apenas os padrões comprováveis no código existente.
 
 ### 28.1 Repository
 
