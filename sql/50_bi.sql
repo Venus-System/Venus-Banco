@@ -239,7 +239,11 @@ SELECT
     pref.prefer_silicone_free,
 
     u.created_at::date AS created_date,
-    u.updated_at::date AS updated_date
+    u.updated_at::date AS updated_date,
+    u.state AS state,
+    u.city AS city,
+    ROUND(u.latitude, 1) AS latitude,
+    ROUND(u.longitude, 1) AS longitude
 FROM venus.users u
 LEFT JOIN venus.user_profiles up
   ON up.fk_user_id = u.user_id
