@@ -42,7 +42,7 @@ A decisão arquitetural aplicada foi separar verdade operacional, cálculo deter
 | Requisitos.xlsx | referência do planejamento; arquivo original não versionado; requisitos transcritos e rastreados nesta entrega |
 | Draw.io de casos de uso | cadastro, perfil, scan, pesquisa, histórico, avaliação, favoritos, pontuação e recomendação |
 | Draw.io de atividades | fluxos de perfil e escaneamento |
-| Texto colado do Jira | 170 itens com chave, tipo, responsável, status, prioridade e datas |
+| [Jira do projeto SCRUM](https://venus2026.atlassian.net/jira/software/projects/SCRUM/summary?ignoreStickyVersion=true) | backlog vivo com chave, tipo, responsável, status, prioridade, sprint e resolução |
 
 ### Repos do projeto
 
@@ -836,13 +836,13 @@ A IA explica o resultado, mas não substitui a Classificação nem altera a font
 
 ### Diagramas Draw.io inseridos no corpo da entrega
 
-![Diagrama de casos de uso do Venus](venus-diagrama-casos-de-uso.png)
+![Diagrama de casos de uso do Venus](diagramas-png/venus-eqs-casos-de-uso.png)
 
-![Diagrama de atividades do perfil](venus-diagrama-atividades-perfil.png)
+![Diagrama de atividades do perfil](diagramas-png/venus-eqs-atividades-perfil.png)
 
-![Diagrama de atividades do scan](venus-diagrama-atividades-scan.png)
+![Diagrama de atividades do scan](diagramas-png/venus-eqs-atividades-scan.png)
 
-As imagens acima foram geradas a partir dos três arquivos Draw.io originais do planejamento e ficam no mesmo diretório desta documentação para compor o corpo do texto.
+As imagens acima foram exportadas a partir dos três arquivos Draw.io originais do planejamento e ficam em `diagramas-png/` para compor o corpo do texto.
 
 ### Rastreabilidade entre casos de uso e requisitos funcionais
 
@@ -1230,7 +1230,7 @@ A conversão preservou os arquivos originais: SVGs e fontes Mermaid continuam se
 
 Esta seção registra somente padrões identificados no código e na documentação versionados nos repositórios do projeto. A inclusão é documental: não foram criadas classes, rotas, anotações ou alterações de comportamento.
 
-Os arquivos **Padrão de Projeto.docx** e **Requisitos.xlsx**, citados no planejamento, não foram encontrados nos repositórios consultados. Por isso, a entrega considera apenas os padrões comprováveis no código existente.
+Os arquivos **Padrão de Projeto.docx** e **Requisitos.xlsx**, citados no planejamento, não foram encontrados nos repositórios do projeto. Por isso, a entrega considera apenas os padrões comprováveis no código existente.
 
 ### 28.1 Repository
 
