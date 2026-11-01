@@ -150,7 +150,7 @@ A divisão abaixo segue a tabela de responsabilidades do planejamento original d
 | Engenharia e Qualidade de Software | Matheus Orestes | Laura Gonçalves | testes automatizados, validação, estabilidade e aceite |
 | UX | Henrique Akira | Rafael Lopes e Sophia Castro | Figma, protótipos, acessibilidade e experiência |
 
-**Nota sobre Operações Ágeis:** conforme a tabela do ZIP, Operações Ágeis ficou com **Felipe Augusto**, com suporte de **Henrique Akira**. A frente foi mantida fora da tabela principal porque a divisão solicitada para esta versão lista apenas as matérias acadêmicas.
+**Nota sobre DevOps:** conforme a tabela do ZIP, DevOps ficou com **Felipe Augusto**, com suporte de **Henrique Akira e Matheus Orestes**. A frente foi mantida fora da tabela principal porque a divisão solicitada para esta versão lista apenas as matérias acadêmicas.
 
 ## 7. Planejamento de execução e metas semanais
 
