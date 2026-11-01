@@ -7,7 +7,7 @@ e Databricks.
 
 > **Regra de leitura:** o PostgreSQL foi validado diretamente no banco de QA.
 > MongoDB e Neo4j possuem scripts de referência incorporados do pacote entregue;
-> Redis e Databricks permanecem explicitamente limitados à evidência versionada.
+> Redis é utilizado como cache pelas APIs do Venus-CRUD e do Venus-Classificacao; Databricks permanece limitado à evidência versionada.
 
 ## Navegação rápida
 
@@ -59,7 +59,7 @@ flowchart LR
     core --> neo4jGraph[("Neo4j - grafo derivado")]
     bi --> databricks["Databricks - consumo analítico"]
     media -.->|metadados| core
-    core -.->|não evidenciado no repo| redis[("Redis")]
+    apps["Venus-CRUD / Venus-Classificacao"] -->|cache| redis[("Redis")]
 ```
 
 </details>
@@ -79,8 +79,9 @@ flowchart LR
 6. O Databricks consome a camada analítica. Ele não deve escrever de volta no
    núcleo operacional.
 
-O desenho usa linhas tracejadas para integrações que são metadados ou ainda não
-possuem implementação comprovada no repositório.
+O desenho usa linhas tracejadas apenas para integrações que são metadados ou
+limites de autoridade. O Redis aparece com fluxo contínuo porque é utilizado
+como cache pelas APIs do Venus-CRUD e do Venus-Classificacao.
 
 ## Estado real do PostgreSQL em QA
 
@@ -107,7 +108,7 @@ O gerador consulta metadados e não cria, altera ou remove objetos no banco.
 | PostgreSQL | Implementado e validado em QA. | [`sql/`](sql/) |
 | MongoDB | Contrato e scripts de `scan_sessions`; não executado nesta revisão. | [`mongodb/`](mongodb/) |
 | Neo4j | Carga, constraints, seed e consultas; conector não versionado. | [`neo4j/`](neo4j/) |
-| Redis | Sem código, configuração ou contrato evidenciado. | [`redis/README.md`](redis/README.md) |
+| Redis | Utilizado como cache de favoritos e de classificações, com fallback ao PostgreSQL. | [`redis/README.md`](redis/README.md) |
 | Cloudinary | Serviço backend e registro SQL de metadados. | [`cloudinary/`](cloudinary/) |
 | Databricks | Consumidor documentado; sem notebooks/jobs no repo. | [`databricks/README.md`](databricks/README.md) |
 
