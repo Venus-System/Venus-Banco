@@ -2,6 +2,9 @@
 flowchart LR
     LEGACY[(Banco legado externo)]
     RPA[rpa_migrate.py]
+    APPS[Venus-CRUD / Venus-Classificacao]
+    CACHE[(Redis — cache)]
+    APPS -->|favoritos e análises| CACHE
 
     subgraph RPA_SCHEMA[venus_rpa — integração e staging]
         RUN[rpa_run]
