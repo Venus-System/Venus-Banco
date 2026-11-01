@@ -721,7 +721,7 @@ stateDiagram-v2
     [*] --> pending_review
     pending_review --> approved: revisão/aprovação
     pending_review --> rejected: revisão/rejeição
-    approved --> synced: /sync concluído
+    approved --> synced: sincronizou na aprovação
     approved --> sync_failed: /sync falhou
     sync_failed --> synced: nova tentativa de /sync concluída
     sync_failed --> sync_failed: nova tentativa falhou
@@ -1255,7 +1255,16 @@ Evidências:
 - [ProductResponse.java](https://github.com/Venus-System/Venus-CRUD/blob/main/src/main/java/com/venus/crud/dto/jpa/response/product/ProductResponse.java)
 - [Decisão sobre MapStruct e DTOs](https://github.com/Venus-System/Venus-CRUD/blob/main/docs/decisoes/04-pacotes-mvc.md)
 
-### 28.3 Strategy
+### 28.3 MVC
+
+O padrão MVC está aplicado em todo o **Venus-CRUD** para organizar a API em responsabilidades separadas: o Controller recebe as requisições e devolve as respostas, o Service concentra a regra de negócio, o Repository e a Entity cuidam da persistência e o contrato externo é exposto por DTOs. Assim, cada camada muda por um motivo só, reduzindo acoplamento e facilitando manutenção e testes.
+
+Evidências:
+
+- [Como uma requisição passa pelo código](https://github.com/Venus-System/Venus-CRUD/blob/develop/README.md#como-uma-requisição-passa-pelo-código)
+- [Decisão de organização das camadas MVC](https://github.com/Venus-System/Venus-CRUD/blob/develop/docs/decisoes/04-pacotes-mvc.md)
+
+### 28.4 Strategy
 
 O padrão Strategy está aplicado no **Venus-Classificacao**, que separa o contrato de cálculo de uma nota de qualidade das implementações concretas por dimensão. O motor pode selecionar e executar estratégias independentes para qualidade ambiental, ética, saúde e desempenho, mantendo o fluxo de classificação aberto para novas regras sem concentrar todos os cálculos em uma única classe.
 
@@ -1266,11 +1275,11 @@ Evidências:
 - [HealthScoreStrategy.java](https://github.com/Venus-System/Venus-Classificacao/blob/develop/src/main/java/com/venus/classificacao/service/quality/strategy/HealthScoreStrategy.java)
 - [README do Venus-Classificacao](https://github.com/Venus-System/Venus-Classificacao/blob/develop/README.md)
 
-### 28.4 Resultado da verificação dos repositórios
+### 28.5 Resultado da verificação dos repositórios
 
 A busca transversal encontrou evidência explícita de `Repository` e `DTO + Mapper` no Venus-CRUD e de `Strategy` no Venus-Classificacao. Portanto, estes são os padrões de projeto evidenciados na entrega; não foram atribuídos padrões adicionais aos demais repos do projeto sem artefato versionado suficiente.
 
-### 28.5 Limite da entrega
+### 28.6 Limite da entrega
 
 Os padrões acima descrevem componentes que já existiam e continuam sendo usados pelo sistema. Nenhuma implementação funcional foi modificada para produzir esta seção.
 \n
