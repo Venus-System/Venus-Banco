@@ -27,11 +27,22 @@ Evidências:
 - [ProductResponse.java](https://github.com/Venus-System/Venus-CRUD/blob/main/src/main/java/com/venus/crud/dto/jpa/response/product/ProductResponse.java)
 - [Decisão sobre MapStruct e DTOs](https://github.com/Venus-System/Venus-CRUD/blob/main/docs/decisoes/04-pacotes-mvc.md)
 
-### 28.3 Resultado da verificação dos repositórios
+### 28.3 Strategy
 
-A busca transversal encontrou evidência explícita de `Repository`, `DTO` e `Mapper` no Venus-CRUD. Nos demais repositórios, não foi localizado um artefato versionado que permita afirmar a aplicação de outro padrão de projeto. Portanto, esta documentação não atribui padrões adicionais ao Venus-Banco, Venus-Classificacao, Venus-Web, Venus-mobile, Venus-AI-api, Venus-AI-Sdk ou Venus-1ANO-CRUD.
+O padrão Strategy está aplicado no **Venus-Classificacao**, que separa o contrato de cálculo de uma nota de qualidade das implementações concretas por dimensão. O motor pode executar estratégias independentes para qualidade ambiental, ética, saúde e desempenho, mantendo o fluxo aberto para novas regras.
 
-### 28.4 Limite da entrega
+Evidências:
+
+- [BucketScoreStrategy.java](https://github.com/Venus-System/Venus-Classificacao/blob/develop/src/main/java/com/venus/classificacao/service/quality/strategy/BucketScoreStrategy.java)
+- [EnvironmentalScoreStrategy.java](https://github.com/Venus-System/Venus-Classificacao/blob/develop/src/main/java/com/venus/classificacao/service/quality/strategy/EnvironmentalScoreStrategy.java)
+- [HealthScoreStrategy.java](https://github.com/Venus-System/Venus-Classificacao/blob/develop/src/main/java/com/venus/classificacao/service/quality/strategy/HealthScoreStrategy.java)
+- [README do Venus-Classificacao](https://github.com/Venus-System/Venus-Classificacao/blob/develop/README.md)
+
+### 28.4 Resultado da verificação dos repositórios
+
+A busca transversal encontrou evidência explícita de `Repository` e `DTO + Mapper` no Venus-CRUD e de `Strategy` no Venus-Classificacao. Estes são os padrões de projeto evidenciados nos repos do projeto; não foram atribuídos padrões adicionais sem artefato versionado suficiente.
+
+### 28.5 Limite da entrega
 
 Os padrões acima descrevem componentes que já existiam e continuam sendo usados pelo sistema. Nenhuma implementação funcional foi modificada para produzir esta seção.
 \n

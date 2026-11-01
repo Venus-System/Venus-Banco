@@ -147,7 +147,7 @@ A divisão abaixo segue a tabela de responsabilidades do planejamento original d
 | Desenvolvimento | Felipe Augusto | Laura Gonçalves | backend, APIs, procedures, integrações e cache de favoritos no Redis |
 | IA | Sophia Castro | Rafael Lopes | agentes, RAG, explicações, chat e recomendações |
 | BI | Sophia Castro | Matheus Orestes | pipeline, KPIs, métricas e dashboards |
-| Engenharia e Qualidade de Software | Matheus Orestes | Laura Gonçalves | testes, TDD, validação, estabilidade e aceite |
+| Engenharia e Qualidade de Software | Matheus Orestes | Laura Gonçalves | testes automatizados, validação, estabilidade e aceite |
 | UX | Henrique Akira | Rafael Lopes e Sophia Castro | Figma, protótipos, acessibilidade e experiência |
 
 **Nota sobre Operações Ágeis:** conforme a tabela do ZIP, Operações Ágeis ficou com **Felipe Augusto**, com suporte de **Henrique Akira**. A frente foi mantida fora da tabela principal porque a divisão solicitada para esta versão lista apenas as matérias acadêmicas.
@@ -227,7 +227,7 @@ A fase original de backend prevista para 27/07–16/08 continuou na Semana 1 das
 - O início da API de classificação ficou registrado como em andamento (➖).
 - O orquestrador multiagente foi desenvolvido com LangGraph.
 - O chatbot foi integrado ao fluxo de roteamento.
-- A implementação do Redis ficou registrada como em andamento (➖). No código da develop, o Redis também aparece no Venus-CRUD para o cache dos favoritos, e os CacheConfig do CRUD e da Classificação pertencem à frente que implementou esses serviços.
+- As marcações ➖ da planilha nas semanas 3 e 4 representam o estágio daquele momento. Na entrega consolidada, o Redis está utilizado como cache no Venus-CRUD (favoritos) e no Venus-Classificacao (análises), com o PostgreSQL permanecendo como fonte de verdade. Os CacheConfig pertencem às APIs que utilizam o cache.
 - A aplicação Web foi publicada na Vercel.
 - Tokens de estilo, tipos de domínio, services e componentes-base do DAD foram implementados.
 
@@ -320,7 +320,7 @@ A fase original de backend prevista para 27/07–16/08 continuou na Semana 1 das
 **Como foi feito**
 
 - Rafael Lopes implementou a tela de score e ingredientes e os ajustes de estilo.
-- Matheus Orestes conduziu TDD nos repos do projeto.
+- Matheus Orestes foi responsável por Engenharia e Qualidade de Software e conduziu a validação e os testes automatizados nos repos do projeto. O histórico disponível não comprova TDD estrito como ordem temporal Red–Green–Refactor; por isso, a entrega registra testes e validações efetivamente feitos sem atribuir uma metodologia que o Git não permite verificar.
 - Henrique Akira implementou histórico, favoritos, comparação, scanner, chatbot Web, tela DASH, teste A/B e matriz pós-teste.
 - Henrique Akira também corrigiu perguntas, fluxo de administração, matriz de feature e proposta de valor.
 - Laura Gonçalves continuou a execução operacional do Neo4j conforme a arquitetura definida por Matheus Orestes.
@@ -661,7 +661,7 @@ Upload assinado: a API autentica, gera public_id e assinatura; o cliente envia o
 
 ### Redis
 
-O Redis aparece no Venus-CRUD no cache dos favoritos e na Classificação nos GETs de análises por seis horas, com fallback ao banco. Os CacheConfig do CRUD e da Classificação pertencem à implementação dessas frentes; Redis não é atribuído à arquitetura de PostgreSQL/MongoDB/Neo4j de Matheus Orestes nem à execução operacional de Laura Gonçalves. O Venus-Banco continua sem implementação Redis própria, porque o cache é integração de serviço e não fonte de verdade.
+O Redis está utilizado no projeto como camada de cache: no Venus-CRUD para favoritos e no Venus-Classificacao para análises por seis horas, com fallback ao PostgreSQL. Os CacheConfig pertencem às APIs que utilizam o cache; Redis não é atribuído à arquitetura de PostgreSQL/MongoDB/Neo4j de Matheus Orestes nem à execução operacional de Laura Gonçalves. O PostgreSQL continua como fonte de verdade, enquanto o Redis acelera leituras e não substitui os dados persistidos.
 
 ### Neo4j e BI
 
@@ -1255,11 +1255,22 @@ Evidências:
 - [ProductResponse.java](https://github.com/Venus-System/Venus-CRUD/blob/main/src/main/java/com/venus/crud/dto/jpa/response/product/ProductResponse.java)
 - [Decisão sobre MapStruct e DTOs](https://github.com/Venus-System/Venus-CRUD/blob/main/docs/decisoes/04-pacotes-mvc.md)
 
-### 28.3 Resultado da verificação dos repositórios
+### 28.3 Strategy
 
-A busca transversal encontrou evidência explícita de `Repository`, `DTO` e `Mapper` no Venus-CRUD. Nos demais repositórios, não foi localizado um artefato versionado que permita afirmar a aplicação de outro padrão de projeto. Portanto, esta documentação não atribui padrões adicionais ao Venus-Banco, Venus-Classificacao, Venus-Web, Venus-mobile, Venus-AI-api, Venus-AI-Sdk ou Venus-1ANO-CRUD.
+O padrão Strategy está aplicado no **Venus-Classificacao**, que separa o contrato de cálculo de uma nota de qualidade das implementações concretas por dimensão. O motor pode selecionar e executar estratégias independentes para qualidade ambiental, ética, saúde e desempenho, mantendo o fluxo de classificação aberto para novas regras sem concentrar todos os cálculos em uma única classe.
 
-### 28.4 Limite da entrega
+Evidências:
+
+- [BucketScoreStrategy.java](https://github.com/Venus-System/Venus-Classificacao/blob/develop/src/main/java/com/venus/classificacao/service/quality/strategy/BucketScoreStrategy.java)
+- [EnvironmentalScoreStrategy.java](https://github.com/Venus-System/Venus-Classificacao/blob/develop/src/main/java/com/venus/classificacao/service/quality/strategy/EnvironmentalScoreStrategy.java)
+- [HealthScoreStrategy.java](https://github.com/Venus-System/Venus-Classificacao/blob/develop/src/main/java/com/venus/classificacao/service/quality/strategy/HealthScoreStrategy.java)
+- [README do Venus-Classificacao](https://github.com/Venus-System/Venus-Classificacao/blob/develop/README.md)
+
+### 28.4 Resultado da verificação dos repositórios
+
+A busca transversal encontrou evidência explícita de `Repository` e `DTO + Mapper` no Venus-CRUD e de `Strategy` no Venus-Classificacao. Portanto, estes são os padrões de projeto evidenciados na entrega; não foram atribuídos padrões adicionais aos demais repos do projeto sem artefato versionado suficiente.
+
+### 28.5 Limite da entrega
 
 Os padrões acima descrevem componentes que já existiam e continuam sendo usados pelo sistema. Nenhuma implementação funcional foi modificada para produzir esta seção.
 \n
