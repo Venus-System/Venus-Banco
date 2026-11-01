@@ -6,7 +6,6 @@ flowchart LR
     CACHE[(Redis — cache)]
     APPS -->|favoritos e análises| CACHE
 
-
     subgraph RPA_SCHEMA[venus_rpa — integração e staging]
         RUN[rpa_run]
         STAGE_P[rpa_stage_product]
@@ -16,7 +15,6 @@ flowchart LR
         RUN --> STAGE_U
         RUN --> ERR
     end
-
 
     subgraph CORE[venus — núcleo transacional]
         ID[Identidade e perfis]
@@ -32,12 +30,23 @@ flowchart LR
         CATALOG --> ENGAGE
     end
 
-
     subgraph AUDIT[venus_audit]
         AUDIT_LOG[audit_logs]
     end
 
-
     subgraph BI[venus_bi — somente views]
         DIM[Dimensões]
         FACT[Fatos]
+        KPI[KPIs e rankings]
+        DIM --> KPI
+        FACT --> KPI
+    end
+
+    OPT[venus_optimization.readme]
+
+    LEGACY --> RPA --> RPA_SCHEMA
+    STAGE_P -. carrega .-> CATALOG
+    STAGE_U -. carrega .-> ID
+    CORE -. triggers de auditoria .-> AUDIT_LOG
+    CORE --> BI
+    CORE -. extensão futura .-> OPT
