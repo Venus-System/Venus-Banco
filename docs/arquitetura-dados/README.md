@@ -1,16 +1,21 @@
 # Arquitetura de dados ponta a ponta
 
+
 Esta pasta contém o mapa transversal da arquitetura. Os scripts e contratos de
 cada tecnologia ficam nas pastas de primeiro nível do repositório: `sql/`,
 `mongodb/`, `neo4j/`, `redis/`, `databricks/`, `ocr/` e `cloudinary/`.
 
+
 ## Fluxo canônico
 
+
 ![Desenho da arquitetura de dados do Venus](venus-data-architecture.svg)
+
 
 O SVG acima é a visualização estática versionada para leitores do GitHub. O
 arquivo [`architecture-overview.mmd`](architecture-overview.mmd) permanece como
 fonte editável do diagrama.
+
 
 ```mermaid
 flowchart LR
@@ -23,12 +28,14 @@ flowchart LR
     PG --> N[(Neo4j\n grafo de compatibilidade)]
     PG --> BI[(venus_bi\n views analíticas)]
     BI --> D[Databricks\n consumo analítico]
-    PG --> CACHE[(Redis\n não evidenciado neste repo)]
+    APPS[Venus-CRUD / Venus-Classificacao] --> CACHE[(Redis\n cache utilizado)]
     L[Legado externo] --> RPA[venus_rpa]
     RPA --> PG
 ```
 
+
 ## Papel de cada tecnologia
+
 
 | Camada | Responsabilidade | Evidência disponível |
 |---|---|---|
@@ -37,10 +44,12 @@ flowchart LR
 | MongoDB | Mantém o documento de scan, OCR, fila administrativa e estado de sincronização. | [`../../mongodb/README.md`](../../mongodb/README.md). |
 | PostgreSQL | Fonte operacional de produtos, ingredientes, usuários, scoring, auditoria, RPA e views. | Validado diretamente no banco `Venus-qa`; detalhes em [`../../sql/README.md`](../../sql/README.md). |
 | Neo4j | Representa produtos, ingredientes, tipos ativos e relações de composição/compatibilidade. | [`../../neo4j/README.md`](../../neo4j/README.md). Não há conector de execução no repo. |
-| Redis | Cache ou fila potencial. | Pasta explícita, sem contrato ou código Redis versionado. |
+| Redis | Cache utilizado no Venus-CRUD e no Venus-Classificacao; a fonte de verdade permanece no PostgreSQL. | [`../../redis/README.md`](../../redis/README.md). |
 | Databricks | Consome a camada analítica para exploração, notebooks ou jobs. | [`../../databricks/README.md`](../../databricks/README.md). |
 
+
 ## Fronteiras de autoridade
+
 
 - O PostgreSQL é a fonte de verdade operacional depois que uma projeção de OCR
   é aprovada.
@@ -50,11 +59,12 @@ flowchart LR
   canônico dos metadados e do vínculo com usuário, produto ou lista.
 - O Neo4j recebe uma representação de grafo e não substitui as tabelas
   relacionais de composição e scoring.
-- Redis e Databricks não devem ser tratados como implementados apenas por
-  existirem no desenho. A documentação desses pontos descreve o limite da
-  evidência disponível.
+- Redis é utilizado como camada de cache pelas APIs, sem substituir o PostgreSQL.
+  Databricks permanece consumidor analítico e não deve escrever no núcleo operacional.
+
 
 ## Mapa técnico
+
 
 - [`../../sql/README.md`](../../sql/README.md)
 - [`../../mongodb/README.md`](../../mongodb/README.md)
@@ -64,3 +74,4 @@ flowchart LR
 - [`../../ocr/README.md`](../../ocr/README.md)
 - [`../../cloudinary/README.md`](../../cloudinary/README.md)
 - [`architecture-overview.mmd`](architecture-overview.mmd)
+
