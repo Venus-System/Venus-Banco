@@ -138,20 +138,20 @@
   <text class="cardTitle" x="1108" y="485">Databricks</text>
   <text class="cardText" x="1108" y="508">BI, exploração e análises</text>
 
-  <rect class="cardMuted" x="1080" y="630" width="390" height="100"/>
-  <text class="cardSmall" x="1108" y="659" style="fill:#64748b">não evidenciado no repositório</text>
+  <rect class="card" x="1080" y="630" width="390" height="100"/>
+  <text class="cardSmall" x="1108" y="659" style="fill:#64748b">integração utilizada</text>
   <text class="cardTitle" x="1108" y="685">Redis</text>
-  <text class="cardText" x="1108" y="708">cache ou fila potencial</text>
+  <text class="cardText" x="1108" y="708">cache de favoritos e análises</text>
 
   <path class="arrow" d="M920 263 C980 263, 1015 280, 1080 280"/>
   <text class="edgeLabel" x="954" y="245">projeta</text>
   <path class="arrow" d="M920 584 C985 584, 1015 480, 1080 480"/>
   <text class="edgeLabel" x="957" y="535">publica views</text>
-  <path class="arrowDashed" d="M920 292 C1000 320, 1025 680, 1080 680"/>
-  <text class="edgeLabel" x="965" y="650">possível cache</text>
+  <path class="arrow" d="M920 292 C1000 320, 1025 680, 1080 680"/>
+  <text class="edgeLabel" x="965" y="650">cache utilizado pelas APIs</text>
 
   <line x1="55" y1="808" x2="1545" y2="808" stroke="#e2e8f0" stroke-width="1"/>
   <text class="footer" x="55" y="832">Evidência principal: PostgreSQL Venus-qa, validado em modo READ ONLY em 26/10/2026.</text>
-  <text class="footer" x="55" y="853">Linhas tracejadas representam metadados ou componentes sem implementação comprovada neste repositório.</text>
+  <text class="footer" x="55" y="853">Linhas tracejadas representam metadados ou integrações fora deste repositório.</text>
 </svg>
 
