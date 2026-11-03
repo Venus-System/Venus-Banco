@@ -1,6 +1,6 @@
 # MongoDB
 
-O MongoDB guarda dois conjuntos de dados do Venus: as sessões de escaneamento do Venus-CRUD, antes de virarem catálogo no PostgreSQL, e o estado do chatbot, gravado pelo Venus-AI-Sdk e pelo Venus-AI-api. No fim estão os scripts do validador anterior, copiados do `Banco_de_dados.zip`.
+O MongoDB guarda dois conjuntos de dados do Venus: as sessões de escaneamento do Venus-CRUD, antes de virarem catálogo no PostgreSQL, e o estado do chatbot, gravado pelo Venus-AI-Sdk e pelo Venus-AI-api. No fim estão os scripts do validador anterior.
 
 ## MongoDB `venus`: sessões de escaneamento em `scan_sessions`
 
@@ -365,7 +365,7 @@ Cada mensagem registrada em `limites_chat` participa dos contadores de minuto e 
 
 ## Scripts do validador anterior
 
-O validador abaixo foi copiado do `Banco_de_dados.zip`. O Venus-CRUD grava outro formato (`ingredients` na raiz, `review`, `approved_snapshot` e `sync`), descrito na seção da coleção `scan_sessions`; com este validador ativo na coleção, o insert do CRUD seria recusado.
+O validador abaixo representa o formato anterior. O Venus-CRUD grava outro formato (`ingredients` na raiz, `review`, `approved_snapshot` e `sync`), descrito na seção da coleção `scan_sessions`; com este validador ativo na coleção, o insert do CRUD seria recusado.
 
 ### Contrato do validador (`validation.js`)
 
@@ -389,9 +389,8 @@ prontidão do SQL.
 - `seed.js`: documentos demonstrativos idempotentes.
 - `consultas.js`: consultas operacionais para revisão e sincronização.
 
-Os arquivos foram copiados do `Banco_de_dados.zip` fornecido e preservados como
-referência. Eles não foram executados nesta revisão, conforme a regra de validar
-diretamente apenas o SQL.
+Os arquivos foram preservados como referência. Eles não foram executados nesta
+revisão, conforme a regra de validar diretamente apenas o SQL.
 
 ### Observações para execução
 
